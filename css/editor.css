@@ -1,0 +1,152 @@
+/* ============================================================
+   PROMPTSTUDIO — Code Editor Styles
+   ============================================================ */
+
+/* ── Editor Toolbar ── */
+#editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  min-height: 28px;
+}
+
+#editor-toolbar .spacer { flex: 1; }
+
+/* ── Editor Wrapper ── */
+#editor-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--surface-0);
+}
+
+/* ── Line Numbers Gutter ── */
+.editor-gutter {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 48px;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding-top: 16px;
+  text-align: right;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  user-select: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── Textarea Editor ── */
+#editor {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  resize: none;
+  padding: 16px 20px 16px 60px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 2;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#editor::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* ── Validation Badge in Toolbar ── */
+#validation-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  transition: background var(--fast);
+}
+
+#validation-count:hover {
+  background: var(--surface-3);
+}
+
+#validation-count.has-errors {
+  color: var(--error);
+}
+
+#validation-count.has-warnings {
+  color: var(--warning);
+}
+
+/* ── Validation Panel ── */
+#validation-panel {
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  max-height: 140px;
+  overflow-y: auto;
+  display: none;
+  flex-shrink: 0;
+}
+
+#validation-panel.visible {
+  display: block;
+}
+
+.validation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: background var(--fast);
+  border-bottom: 1px solid var(--border);
+}
+
+.validation-item:last-child {
+  border-bottom: none;
+}
+
+.validation-item:hover {
+  background: var(--surface-3);
+}
+
+.validation-item .v-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.validation-item.warning .v-icon { color: var(--warning); }
+.validation-item.error .v-icon { color: var(--error); }
+.validation-item.info .v-icon { color: var(--info); }
+
+.validation-item .v-msg {
+  color: var(--text-secondary);
+  flex: 1;
+  line-height: 1.4;
+}
+
+.validation-item .v-loc {
+  color: var(--text-muted);
+  font-family: var(--font-code);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}

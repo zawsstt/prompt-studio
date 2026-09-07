@@ -1,0 +1,190 @@
+/* ============================================================
+   PROMPTSTUDIO — Modification Log Tab (Glassmorphism)
+   Slide-in panel: backdrop-filter blur, semi-transparent
+   ============================================================ */
+
+/* ── Panel ── */
+#mod-log-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--modlog-w);
+  max-width: 100vw;
+  z-index: calc(var(--z-modal) + 1);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-left: 1px solid var(--glass-border);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform var(--slow) var(--ease-out);
+}
+
+#mod-log-panel.active {
+  transform: translateX(0);
+}
+
+/* ── Header ── */
+#mod-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+#mod-log-header .ml-title {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+}
+
+/* ── Body ── */
+#mod-log-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Sections ── */
+.ml-section {}
+
+.ml-section .ml-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.ml-section .ml-value {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Collapsible long text */
+.ml-section .ml-value.more {
+  max-height: 4.8em;
+  overflow: hidden;
+  position: relative;
+}
+
+.ml-section .ml-value.more::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2em;
+  background: linear-gradient(transparent, var(--glass-bg));
+}
+
+.ml-expand {
+  font-size: var(--font-size-sm);
+  color: var(--brand);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  padding: 2px 0;
+}
+
+.ml-expand:hover {
+  text-decoration: underline;
+}
+
+/* ── Type Badge ── */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.type-badge.add {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-text);
+  border: 1px solid var(--diff-add-border);
+}
+
+.type-badge.del {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-text);
+  border: 1px solid var(--diff-del-border);
+}
+
+.type-badge.replace {
+  background: var(--diff-replace-bg);
+  color: var(--diff-replace-text);
+  border: 1px solid var(--diff-replace-border);
+}
+
+.type-badge.reorder {
+  background: var(--diff-reorder-bg);
+  color: var(--diff-reorder-text);
+  border: 1px solid var(--diff-reorder-border);
+}
+
+/* ── Diff Preview in Log ── */
+.ml-diff-preview {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* ── Meta Row ── */
+.ml-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.ml-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ── Disclaimer ── */
+.ml-disclaimer {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: 6px 8px;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}
+
+/* ── Footer ── */
+#mod-log-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Pin Button ── */
+#btn-pin-log.pinned {
+  color: var(--brand);
+}

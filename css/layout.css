@@ -1,0 +1,259 @@
+/* ============================================================
+   PROMPTSTUDIO — Layout System
+   4-area layout: NavColumn + TopBar + MainArea + ChatPanel
+   ============================================================ */
+
+/* ── Root App Container ── */
+#app {
+  display: grid;
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-columns: var(--nav-w) 1fr var(--chat-w);
+  grid-template-areas:
+    "nav    topbar  topbar"
+    "nav    main    chat";
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ── Navigation Column ── */
+#nav-column {
+  grid-area: nav;
+  width: var(--nav-w);
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 4px;
+  z-index: var(--z-panel);
+  user-select: none;
+}
+
+#nav-column .nav-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+#nav-column .nav-group-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-icon {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--fast) var(--ease-out);
+}
+
+.nav-icon:hover {
+  color: var(--text-primary);
+  background: var(--surface-3);
+}
+
+.nav-icon.active {
+  color: var(--text-primary);
+  background: var(--brand-muted);
+}
+
+.nav-icon.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: var(--brand);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── Top Bar ── */
+#topbar {
+  grid-area: topbar;
+  height: var(--topbar-h);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  z-index: calc(var(--z-panel) + 10);
+  user-select: none;
+}
+
+#topbar .spacer {
+  flex: 1;
+}
+
+#topbar .doc-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 240px;
+}
+
+#topbar .doc-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+#topbar .doc-indicator .dot.modified {
+  background: var(--warning);
+  box-shadow: 0 0 6px var(--warning);
+}
+
+/* ── Main Content Area ── */
+#main-area {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--surface-0);
+}
+
+/* View containers */
+.view-container {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.view-container.active {
+  display: flex;
+}
+
+/* Editor View */
+#editor-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+#editor-view.active {
+  display: flex;
+}
+
+#editor-view.hidden {
+  display: none;
+}
+
+/* Version View */
+#version-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
+#version-view.active {
+  display: flex;
+}
+
+/* ── Chat Panel (right side) ── */
+#chat-panel {
+  grid-area: chat;
+  width: var(--chat-w);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--slow) var(--ease-out);
+}
+
+#chat-panel.collapsed {
+  width: 0;
+  min-width: 0;
+  border-left: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Diff Overlay (full main area) ── */
+#diff-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: var(--surface-0);
+  display: none;
+  flex-direction: column;
+}
+
+#diff-overlay.active {
+  display: flex;
+}
+
+/* ── Mod Log Overlay ── */
+#mod-log-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--slow) var(--ease-out);
+}
+
+#mod-log-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  #app {
+    grid-template-columns: var(--nav-w) 1fr 0;
+  }
+  #chat-panel {
+    position: fixed;
+    top: var(--topbar-h);
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-overlay);
+    width: 360px;
+    box-shadow: var(--shadow-lg);
+  }
+  #chat-panel.collapsed {
+    width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  #app {
+    grid-template-columns: 0 1fr 0;
+  }
+  #nav-column { display: none; }
+  #chat-panel {
+    width: 100%;
+    max-width: 100vw;
+  }
+}

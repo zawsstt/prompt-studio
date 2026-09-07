@@ -1,0 +1,40 @@
+{
+  "name": "prompt-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.18.7",
+    "@codemirror/commands": "^6.8.3",
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/lang-yaml": "^6.1.2",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
+    "codemirror": "^6.0.1",
+    "dexie": "^4.0.11",
+    "diff-match-patch": "^1.0.5",
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.3",
+    "remark-gfm": "^4.0.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/diff-match-patch": "^1.0.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "puppeteer-core": "^25.5.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}

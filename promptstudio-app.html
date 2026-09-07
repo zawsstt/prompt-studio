@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptStudio · 可交互原型</title>
+<style>
+/* ============================================================
+   PromptStudio App Prototype
+   设计语言继承自 promptstudio.html（官网落地页），
+   在布局密度、组件层级与微交互上做了应用化升级。
+   ============================================================ */
+:root{
+  --bg:#fbfbfd; --bg-alt:#f5f5f7;
+  --ink:#1d1d1f; --ink-2:#515154; --ink-3:#86868b;
+  --line:rgba(0,0,0,.08);
+  --brand:#6366F1; --brand-deep:#4f46e5;
+  --green:#16A34A; --red:#DC2626; --blue:#2563EB; --amber:#D97706;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --mono:"SF Mono","JetBrains Mono","Cascadia Code",ui-monospace,Menlo,Consolas,"PingFang SC","Microsoft YaHei",monospace;
+  --sb-w:248px; --tb-h:52px;
+  --shadow-pop:0 12px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg-alt);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden;height:100vh;
+}
+::selection{background:rgba(99,102,241,.18)}
+button{font-family:inherit;cursor:pointer}
+button:active{transform:scale(.97)}
+.mono{font-family:var(--mono)}
+
+/* ---------- App shell ---------- */
+.app{display:flex;height:100vh}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;transition:margin .35s var(--ease)}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:var(--sb-w);flex:none;background:#fff;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;z-index:60;
+  transition:transform .35s var(--ease);
+}
+.sb-head{display:flex;align-items:center;gap:8px;padding:14px 16px 10px;font-weight:600;font-size:14.5px;letter-spacing:-.01em}
+.sb-head .mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+.sb-ver{margin-left:auto;font-size:10px;color:var(--ink-3);background:var(--bg-alt);border:1px solid var(--line);padding:2px 7px;border-radius:980px}
+.sb-search{margin:4px 12px 10px;position:relative}
+.sb-search input{
+  width:100%;font-size:12.5px;padding:8px 12px 8px 30px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg-alt);outline:none;color:var(--ink);
+  transition:border-color .2s,background .2s,box-shadow .2s;font-family:inherit;
+}
+.sb-search input:focus{border-color:rgba(99,102,241,.5);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.sb-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.45}
+.sb-sec{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;padding:10px 18px 6px;display:flex;align-items:center}
+.sb-sec button{margin-left:auto;border:none;background:none;font-size:15px;color:var(--ink-3);width:22px;height:22px;border-radius:6px;line-height:1;transition:background .2s,color .2s}
+.sb-sec button:hover{background:rgba(99,102,241,.1);color:var(--brand-deep)}
+.file-list{flex:1;overflow-y:auto;padding:0 8px 12px}
+.file-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;cursor:pointer;
+  transition:background .18s var(--ease);position:relative;border:1px solid transparent;
+}
+.file-item:hover{background:var(--bg-alt)}
+.file-item.on{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.18)}
+.file-item.on::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--brand)}
+.file-ico{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:13px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.1));color:var(--brand-deep)}
+.file-meta{min-width:0;flex:1}
+.file-name{font-size:12.5px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-sub{font-size:10.5px;color:var(--ink-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15);display:none}
+.file-item.dirty .file-dot{display:block}
+.sb-foot{border-top:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sb-user{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:10px;cursor:pointer;transition:background .2s}
+.sb-user:hover{background:var(--bg-alt)}
+.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#06B6D4);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700}
+.sb-user .n{font-size:12.5px;font-weight:550}
+.sb-user .p{font-size:10.5px;color:var(--ink-3)}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  height:var(--tb-h);flex:none;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:rgba(251,251,253,.8);backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--line);z-index:50;
+}
+.burger{display:none;width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;position:relative}
+.burger span{position:absolute;left:9px;right:9px;height:1.6px;background:var(--ink);transition:.25s var(--ease)}
+.burger span:first-child{top:13px}.burger span:last-child{bottom:13px}
+.crumb{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:7px;min-width:0}
+.crumb b{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{
+  display:flex;gap:2px;background:rgba(0,0,0,.05);padding:3px;border-radius:10px;position:relative;
+}
+.tab{
+  font-size:12.5px;font-weight:550;color:var(--ink-2);border:none;background:none;
+  padding:6px 15px;border-radius:8px;transition:color .2s,background .25s var(--ease),box-shadow .25s;position:relative;
+}
+.tab.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.tab .cnt{display:inline-grid;place-items:center;min-width:16px;height:16px;font-size:10px;font-weight:700;border-radius:980px;background:var(--amber);color:#fff;margin-left:5px;padding:0 4px}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.model-pill{
+  display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ink-2);
+  background:#fff;border:1px solid var(--line);padding:6px 13px;border-radius:980px;transition:border-color .2s,box-shadow .2s;
+}
+.model-pill:hover{border-color:rgba(99,102,241,.4);box-shadow:0 2px 10px rgba(99,102,241,.12)}
+.model-pill .pulse{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.15);animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(22,163,74,.15)}50%{box-shadow:0 0 0 5px rgba(22,163,74,.08)}}
+.btn-ghost{font-size:12.5px;font-weight:550;color:var(--ink-2);background:#fff;border:1px solid var(--line);padding:7px 14px;border-radius:9px;transition:border-color .2s,background .2s}
+.btn-ghost:hover{border-color:#c7c7cc;background:#f6f6f8}
+.btn-brand{
+  font-size:12.5px;font-weight:600;color:#fff;background:var(--brand);border:none;padding:8px 16px;border-radius:9px;
+  transition:background .2s,transform .18s var(--ease),box-shadow .18s;box-shadow:0 4px 14px rgba(99,102,241,.25);
+}
+.btn-brand:hover{background:var(--brand-deep);transform:translateY(-1px);box-shadow:0 8px 20px rgba(99,102,241,.35)}
+.btn-brand:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ---------- Views ---------- */
+.views{flex:1;position:relative;overflow:hidden}
+.view{
+  position:absolute;inset:0;overflow-y:auto;padding:22px;
+  opacity:0;transform:translateY(14px) scale(.995);pointer-events:none;
+  transition:opacity .38s var(--ease),transform .38s var(--ease);
+}
+.view.on{opacity:1;transform:none;pointer-events:auto}
+
+/* ---------- Edit view ---------- */
+.edit-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:18px;height:100%;max-width:1460px;margin:0 auto}
+.pane{background:#fff;border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.pane-head{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);flex:none;flex-wrap:wrap}
+.chip-ruleset{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--brand-deep);background:rgba(99,102,241,.08);padding:4px 10px;border-radius:7px;border:1px solid rgba(99,102,241,.14)}
+.chip-ok{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--green);background:rgba(22,163,74,.08);padding:4px 10px;border-radius:7px}
+.chip-warn{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:rgba(217,119,6,.09);padding:4px 10px;border-radius:7px}
+.code-wrap{flex:1;overflow-y:auto;padding:12px 0;font-size:12.5px;line-height:1.9}
+.cline{display:flex;white-space:pre;position:relative;transition:background .15s}
+.cline:hover{background:rgba(0,0,0,.025)}
+.cline.editing{background:rgba(99,102,241,.06)}
+.ln{width:44px;flex:none;text-align:right;padding-right:14px;color:#c7c7cc;user-select:none;font-family:var(--mono);font-size:11px;padding-top:2px}
+.lc{font-family:var(--mono);flex:1;padding-right:16px;cursor:text;min-height:1.9em}
+.line-input{
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;border:none;outline:none;flex:1;margin-right:16px;
+  background:#fff;border-radius:6px;box-shadow:0 0 0 2px rgba(99,102,241,.4);padding:0 6px;color:var(--ink);
+}
+.tok-k{color:#AF00DB}.tok-s{color:#A31515}.tok-c{color:#008000}.tok-h{color:#001080;font-weight:600}.tok-p{color:#795E26}
+.squig{background-image:linear-gradient(45deg,transparent 65%,#EAB308 65%),linear-gradient(-45deg,transparent 65%,#EAB308 65%);background-size:4px 3px;background-repeat:repeat-x;background-position:0 100%;padding-bottom:2px}
+.lint{border-top:1px solid var(--line);background:#FFFDF5;flex:none;max-height:158px;display:flex;flex-direction:column;transition:max-height .3s var(--ease)}
+.lint.collapsed{max-height:37px}
+.lint-head{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:11.5px;color:var(--ink-2);cursor:pointer;user-select:none}
+.lint-head .arrow{transition:transform .3s var(--ease);font-size:10px;color:var(--ink-3)}
+.lint.collapsed .lint-head .arrow{transform:rotate(-90deg)}
+.btn-mini{margin-left:auto;font-size:11px;font-weight:600;border:1px solid rgba(99,102,241,.3);color:var(--brand-deep);background:rgba(99,102,241,.06);padding:4px 12px;border-radius:7px;transition:background .2s}
+.btn-mini:hover{background:rgba(99,102,241,.14)}
+.lint-body{overflow-y:auto;padding:0 16px 10px;display:flex;flex-direction:column;gap:4px}
+.lint-item{display:flex;gap:8px;font-size:11.5px;color:var(--ink-2);padding:5px 8px;border-radius:7px;cursor:pointer;transition:background .15s}
+.lint-item:hover{background:rgba(217,119,6,.08)}
+.lint-item .w{color:var(--amber);font-weight:700;flex:none}
+.lint-item .no{font-family:var(--mono);color:var(--ink-3);flex:none}
+
+/* ---------- Chat pane ---------- */
+.chat-pane{display:flex;flex-direction:column;background:#fafafc}
+.chat-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:94%;font-size:12.5px;line-height:1.65;padding:11px 14px;border-radius:15px;animation:msgIn .35s var(--ease)}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px;box-shadow:0 4px 14px rgba(99,102,241,.25)}
+.msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;color:var(--ink-2)}
+.msg.ai .caret{display:inline-block;width:7px;height:13px;background:var(--brand);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.msg-status{align-self:flex-start;display:flex;align-items:center;gap:9px;font-size:11.5px;color:var(--ink-3);padding:8px 13px;background:#fff;border:1px solid var(--line);border-radius:980px;animation:msgIn .3s var(--ease)}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--brand);animation:dotB 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dotB{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.quick-replies{display:flex;gap:7px;padding:0 14px 10px;flex-wrap:wrap;flex:none}
+.qr{font-size:11px;font-weight:550;color:var(--brand-deep);background:#fff;border:1px solid rgba(99,102,241,.28);padding:5px 11px;border-radius:980px;transition:background .2s,transform .18s var(--ease)}
+.qr:hover{background:rgba(99,102,241,.08);transform:translateY(-1px)}
+.apply-bar{
+  margin:0 14px 12px;display:flex;align-items:center;gap:8px;flex:none;
+  background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.08));
+  border:1px solid rgba(99,102,241,.22);border-radius:13px;padding:11px 13px;
+  animation:applyIn .5s var(--ease);
+}
+@keyframes applyIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.apply-bar .t{font-size:11.5px;color:var(--brand-deep);font-weight:600}
+.apply-btn{margin-left:auto;font-size:12px;font-weight:600;color:#fff;background:var(--brand);border:none;padding:7px 15px;border-radius:9px;transition:transform .18s var(--ease),box-shadow .18s,background .2s}
+.apply-btn:hover{background:var(--brand-deep);transform:translateY(-1px);box-shadow:0 6px 16px rgba(99,102,241,.4)}
+.chat-input{flex:none;display:flex;gap:9px;padding:12px 14px;border-top:1px solid var(--line);background:#fff}
+.chat-input textarea{
+  flex:1;resize:none;border:1px solid var(--line);border-radius:11px;padding:9px 12px;font-size:12.5px;
+  font-family:inherit;outline:none;height:40px;max-height:110px;color:var(--ink);transition:border-color .2s,box-shadow .2s;line-height:1.5;
+}
+.chat-input textarea:focus{border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.send-btn{width:40px;height:40px;flex:none;border:none;border-radius:11px;background:var(--brand);color:#fff;display:grid;place-items:center;transition:background .2s,transform .18s var(--ease),box-shadow .18s}
+.send-btn:hover{background:var(--brand-deep);transform:translateY(-1px);box-shadow:0 6px 16px rgba(99,102,241,.35)}
+.send-btn:disabled{opacity:.5;transform:none;box-shadow:none;cursor:not-allowed}
+
+/* ---------- Diff view ---------- */
+.diff-shell{max-width:1460px;margin:0 auto;height:100%;display:flex;flex-direction:column}
+.diff-toolbar{display:flex;align-items:center;gap:9px;padding:10px 4px 14px;flex-wrap:wrap;flex:none}
+.tb-btn{font-size:12px;font-weight:550;border:1px solid var(--line);background:#fff;color:var(--ink-2);padding:7px 14px;border-radius:9px;transition:border-color .2s,background .2s,color .2s}
+.tb-btn:hover{border-color:#c7c7cc;background:#f6f6f8}
+.tb-btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.tb-btn.primary:hover{background:var(--brand-deep)}
+.tb-btn.danger:hover{border-color:rgba(220,38,38,.4);color:var(--red);background:rgba(220,38,38,.05)}
+.tb-stats{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-family:var(--mono);display:flex;gap:14px;flex-wrap:wrap}
+.c-g{color:var(--green)}.c-r{color:var(--red)}
+.progress{flex:none;height:4px;background:rgba(0,0,0,.06);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--brand),#8B5CF6);width:0;transition:width .6s var(--ease)}
+.diff-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;min-height:0}
+.diff-scroll{overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-bottom:20px}
+.block-card{
+  background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;cursor:pointer;
+  transition:border-color .25s,box-shadow .25s,transform .25s var(--ease);animation:msgIn .4s var(--ease);
+}
+.block-card:hover{border-color:rgba(99,102,241,.35);box-shadow:0 8px 26px rgba(0,0,0,.07)}
+.block-card.focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(99,102,241,.15),0 10px 30px rgba(0,0,0,.08)}
+.block-card.accepted{border-color:rgba(22,163,74,.4)}
+.block-card.rejected{opacity:.55;border-color:rgba(220,38,38,.3)}
+.block-head{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:12px}
+.b-type{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:7px}
+.bt-add{color:var(--green);background:rgba(22,163,74,.1)}
+.bt-del{color:var(--red);background:rgba(220,38,38,.09)}
+.bt-rep{color:var(--blue);background:rgba(37,99,235,.09)}
+.block-head .loc{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.block-state{margin-left:auto;display:flex;align-items:center;gap:8px}
+.state-pill{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:980px}
+.sp-pending{color:var(--amber);background:rgba(217,119,6,.1)}
+.sp-ok{color:var(--green);background:rgba(22,163,74,.1)}
+.sp-no{color:var(--red);background:rgba(220,38,38,.09)}
+.mini-ops{display:flex;gap:6px}
+.op-btn{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12px;display:grid;place-items:center;transition:all .18s}
+.op-btn.ok:hover{border-color:var(--green);color:var(--green);background:rgba(22,163,74,.07)}
+.op-btn.no:hover{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.06)}
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;font-size:12px;line-height:1.85}
+.diff-col{padding:10px 0;border-right:1px solid var(--line);min-width:0}
+.diff-col:last-child{border-right:none}
+.dcol-tag{padding:2px 16px 8px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.dline{display:flex;white-space:pre;font-family:var(--mono)}
+.d-add{background:rgba(22,163,74,.09)}
+.d-del{background:rgba(220,38,38,.08)}
+.d-del .dc{text-decoration:line-through;text-decoration-color:rgba(220,38,38,.5)}
+.d-rep{background:rgba(37,99,235,.07)}
+.badge{flex:none;width:16px;height:16px;margin:5px 6px 0 8px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff}
+.b-add{background:var(--green)}.b-del{background:var(--red)}.b-rep{background:var(--blue)}
+.d-empty{padding:26px 16px;font-size:11.5px;color:#c7c7cc;font-family:var(--mono);text-align:center}
+.diff-foot{flex:none;display:flex;gap:16px;padding:12px 4px 2px;font-size:11px;color:var(--ink-3);font-family:var(--mono);flex-wrap:wrap;align-items:center}
+.diff-foot kbd{background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;font-size:10px;font-family:var(--mono)}
+
+/* Detail glass panel */
+.detail-panel{
+  background:rgba(255,255,255,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.8);border-radius:18px;box-shadow:var(--shadow-pop);
+  padding:20px 18px;display:flex;flex-direction:column;gap:13px;overflow-y:auto;height:fit-content;
+  max-height:100%;position:sticky;top:0;
+}
+.detail-panel.empty{align-items:center;justify-content:center;text-align:center;color:var(--ink-3);font-size:12.5px;min-height:280px;border-style:dashed;background:rgba(255,255,255,.5);box-shadow:none}
+.gt-type{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--blue);background:rgba(37,99,235,.1);padding:4px 10px;border-radius:7px;width:fit-content}
+.gt-h{font-size:14px;font-weight:650}
+.gt-sec{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase;margin-bottom:4px}
+.gt-p{font-size:12px;line-height:1.65;color:var(--ink-2);border-radius:8px;padding:4px 6px;margin:0 -6px;transition:background .2s;outline:none}
+.gt-p[contenteditable="true"]:hover{background:rgba(99,102,241,.05)}
+.gt-p[contenteditable="true"]:focus{background:#fff;box-shadow:0 0 0 2px rgba(99,102,241,.3)}
+.gt-meta{margin-top:auto;font-size:10.5px;color:var(--ink-3);font-family:var(--mono);border-top:1px solid rgba(0,0,0,.07);padding-top:12px}
+.gt-ops{display:flex;gap:9px;margin-top:10px}
+.gt-ops button{flex:1;font-size:12px;font-weight:650;padding:9px 0;border-radius:10px;border:none;transition:transform .18s var(--ease),box-shadow .18s,opacity .2s}
+.gt-accept{background:var(--green);color:#fff}
+.gt-accept:hover{box-shadow:0 6px 16px rgba(22,163,74,.35);transform:translateY(-1px)}
+.gt-reject{background:rgba(220,38,38,.1);color:var(--red)}
+.gt-reject:hover{background:rgba(220,38,38,.16)}
+.gt-ops button:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.edit-hint{font-size:10px;color:var(--ink-3);text-align:right;margin-top:-8px}
+
+/* Snapshot bar */
+.snap-bar{
+  display:none;align-items:center;gap:12px;margin-top:14px;padding:14px 18px;border-radius:15px;flex:none;
+  background:linear-gradient(135deg,rgba(22,163,74,.09),rgba(6,182,212,.07));
+  border:1px solid rgba(22,163,74,.25);animation:applyIn .5s var(--ease);
+}
+.snap-bar.show{display:flex}
+.snap-bar .t{font-size:12.5px;font-weight:600;color:#15803D}
+.snap-bar .s{font-size:11px;color:var(--ink-3)}
+.btn-green{margin-left:auto;font-size:12.5px;font-weight:650;color:#fff;background:var(--green);border:none;padding:9px 18px;border-radius:10px;transition:transform .18s var(--ease),box-shadow .18s}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(22,163,74,.35)}
+
+/* Empty candidate state */
+.empty-diff{max-width:560px;margin:8vh auto 0;text-align:center;animation:msgIn .5s var(--ease)}
+.empty-ico{width:72px;height:72px;margin:0 auto 20px;border-radius:22px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.1));border:1px solid rgba(99,102,241,.2)}
+.empty-diff h3{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.empty-diff p{margin:12px 0 24px;font-size:13.5px;line-height:1.7;color:var(--ink-3)}
+
+/* ---------- History view ---------- */
+.hist-shell{max-width:860px;margin:0 auto}
+.hist-head{display:flex;align-items:baseline;gap:12px;margin-bottom:26px;flex-wrap:wrap}
+.hist-head h2{font-size:24px;font-weight:700;letter-spacing:-.025em}
+.hist-head span{font-size:12.5px;color:var(--ink-3)}
+.vline{position:relative;padding-left:34px}
+.vline::before{content:"";position:absolute;left:10px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--brand),#d2d2d7)}
+.v-card{
+  position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:16px;
+  transition:border-color .25s,box-shadow .25s,transform .25s var(--ease);animation:msgIn .45s var(--ease);
+}
+.v-card:hover{border-color:rgba(99,102,241,.3);box-shadow:0 10px 30px rgba(0,0,0,.07);transform:translateY(-2px)}
+.v-card::before{content:"";position:absolute;left:-29px;top:24px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--brand)}
+.v-card.current::before{background:var(--brand);box-shadow:0 0 0 5px rgba(99,102,241,.15)}
+.v-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.v-tag{font-size:12px;font-weight:700;font-family:var(--mono);color:var(--brand-deep);background:rgba(99,102,241,.09);padding:3px 10px;border-radius:7px}
+.v-title{font-size:14.5px;font-weight:650}
+.v-cur{font-size:10px;font-weight:700;color:var(--green);background:rgba(22,163,74,.1);padding:2px 8px;border-radius:980px}
+.v-date{margin-left:auto;font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+.v-stats{display:flex;gap:13px;margin-top:9px;font-size:11px;color:var(--ink-3);font-family:var(--mono);flex-wrap:wrap}
+.v-sum{margin-top:12px;background:var(--bg-alt);border:1px solid var(--line);border-radius:11px;padding:11px 14px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.v-sum .ai-tag{font-size:9.5px;color:var(--brand);font-weight:700;letter-spacing:.06em}
+.v-detail{display:none;margin-top:12px;border-top:1px dashed var(--line);padding-top:12px;flex-direction:column;gap:10px}
+.v-card.expanded .v-detail{display:flex;animation:msgIn .3s var(--ease)}
+.vd-item{font-size:11.5px;line-height:1.6;color:var(--ink-2)}
+.vd-item b{font-size:10px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.v-ops{display:flex;gap:8px;margin-top:14px}
+.v-ops button{font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-2);transition:all .2s}
+.v-ops button:hover{border-color:rgba(99,102,241,.4);color:var(--brand-deep);background:rgba(99,102,241,.05)}
+.v-ops button.rb:hover{border-color:rgba(217,119,6,.45);color:var(--amber);background:rgba(217,119,6,.06)}
+.v-ops button.confirm{border-color:var(--red);color:#fff;background:var(--red)}
+
+/* ---------- Modal: provider wizard ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:200;background:rgba(29,29,31,.4);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s;
+}
+.overlay.show{display:flex;opacity:1}
+.modal{
+  width:600px;max-width:100%;max-height:88vh;overflow-y:auto;background:#fff;border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.3);
+  padding:26px 28px;transform:translateY(18px) scale(.97);transition:transform .35s var(--ease);
+}
+.overlay.show .modal{transform:none}
+.m-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.m-head h3{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.m-close{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink-2);transition:background .2s}
+.m-close:hover{background:var(--bg-alt)}
+.wiz-steps{display:flex;gap:6px;margin:18px 0 22px}
+.wz{flex:1;text-align:center;position:relative;padding-top:18px}
+.wz::before{content:"";position:absolute;top:5px;left:-50%;width:100%;height:2px;background:#e3e3e8}
+.wz:first-child::before{display:none}
+.wz i{position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid #d2d2d7;transition:all .3s;font-style:normal}
+.wz span{font-size:10.5px;color:var(--ink-3);font-weight:550}
+.wz.done::before,.wz.cur::before{background:var(--brand)}
+.wz.done i,.wz.cur i{border-color:var(--brand)}
+.wz.cur i{background:var(--brand);box-shadow:0 0 0 4px rgba(99,102,241,.15)}
+.wz.cur span{color:var(--brand-deep);font-weight:700}
+.wiz-body{min-height:250px}
+.wz-pane{display:none;animation:msgIn .35s var(--ease)}
+.wz-pane.on{display:block}
+.wz-title{font-size:14px;font-weight:650;margin-bottom:14px}
+.prov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.prov-cell{
+  display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:550;color:var(--ink-2);
+  border:1px solid var(--line);border-radius:12px;padding:13px 14px;cursor:pointer;background:#fff;transition:all .2s var(--ease);
+}
+.prov-cell:hover{border-color:rgba(99,102,241,.4);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.07)}
+.prov-cell.sel{border-color:var(--brand);background:rgba(99,102,241,.05);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.prov-cell i{width:9px;height:9px;border-radius:50%;flex:none}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.field input,.field select{
+  width:100%;font-size:13px;padding:10px 13px;border-radius:11px;border:1px solid var(--line);outline:none;
+  font-family:inherit;color:var(--ink);background:#fff;transition:border-color .2s,box-shadow .2s;
+}
+.field input:focus,.field select:focus{border-color:rgba(99,102,241,.55);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.field .hint{font-size:10.5px;color:var(--ink-3);margin-top:5px}
+.key-ok{color:var(--green)}
+.test-box{border:1px solid var(--line);border-radius:13px;padding:18px;text-align:center}
+.test-spin{width:34px;height:34px;margin:0 auto 12px;border-radius:50%;border:3px solid rgba(99,102,241,.18);border-top-color:var(--brand);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.test-ok{width:44px;height:44px;margin:0 auto 12px;border-radius:50%;background:rgba(22,163,74,.12);color:var(--green);display:grid;place-items:center;font-size:20px;animation:popIn .45s var(--ease)}
+@keyframes popIn{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+.test-box .tt{font-size:13px;font-weight:650}
+.test-box .ts{font-size:11px;color:var(--ink-3);margin-top:5px;font-family:var(--mono)}
+.m-foot{display:flex;gap:10px;margin-top:24px}
+.m-foot .sp{flex:1}
+
+/* ---------- Toasts ---------- */
+.toasts{position:fixed;right:18px;bottom:18px;z-index:300;display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:10px;background:rgba(29,29,31,.93);color:#fff;font-size:12.5px;font-weight:550;
+  padding:11px 16px;border-radius:13px;box-shadow:var(--shadow-pop);backdrop-filter:blur(8px);
+  animation:toastIn .4s var(--ease);max-width:340px;
+}
+.toast.out{animation:toastOut .3s var(--ease) forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
+.toast .ic{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px}
+.toast.ok .ic{background:rgba(22,163,74,.35);color:#7ef0a8}
+.toast.info .ic{background:rgba(99,102,241,.4);color:#c7c9ff}
+.toast.warn .ic{background:rgba(217,119,6,.4);color:#ffd79a}
+
+/* ---------- Backdrop (mobile sidebar) ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(29,29,31,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .3s}
+.backdrop.show{opacity:1;pointer-events:auto}
+
+/* ---------- Skeleton ---------- */
+.skel{border-radius:16px;background:linear-gradient(90deg,#eee 25%,#f7f7f9 50%,#eee 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.24);border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .diff-body{grid-template-columns:1fr}
+  .detail-panel{position:static;max-height:none}
+}
+@media (max-width:1024px){
+  .edit-grid{grid-template-columns:1fr;overflow-y:auto}
+  #view-edit{overflow-y:auto}
+  .edit-grid{height:auto}
+  .pane.code-pane{min-height:420px}
+  .chat-pane{min-height:480px}
+}
+@media (max-width:860px){
+  .sidebar{position:fixed;top:0;bottom:0;left:0;transform:translateX(-100%);box-shadow:var(--shadow-pop)}
+  .sidebar.open{transform:none}
+  .burger{display:block}
+  .crumb{display:none}
+  .model-pill .mn{display:none}
+  .view{padding:14px}
+  .diff-grid{grid-template-columns:1fr}
+  .diff-col{border-right:none;border-bottom:1px solid var(--line)}
+  .diff-col:last-child{border-bottom:none}
+  .prov-grid{grid-template-columns:repeat(2,1fr)}
+  .tb-stats{margin-left:0;width:100%}
+  .top-right .btn-ghost{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head"><span class="mark">P</span>PromptStudio<span class="sb-ver">原型 v0.9</span></div>
+    <div class="sb-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="fileSearch" placeholder="搜索 Prompt 文件…" autocomplete="off">
+    </div>
+    <div class="sb-sec">工作区 · prompts/<button id="btnNewFile" title="新建 Prompt">＋</button></div>
+    <div class="file-list" id="fileList"></div>
+    <div class="sb-foot">
+      <div class="sb-user" id="sbUser">
+        <div class="avatar">谢</div>
+        <div><div class="n">xiejr5 的工作区</div><div class="p">本地优先 · 已离线同步</div></div>
+      </div>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" id="burger" aria-label="菜单"><span></span><span></span></button>
+      <div class="crumb">prompts / <b id="crumbName">—</b></div>
+      <div class="tabs" role="tablist">
+        <button class="tab on" data-tab="edit">编辑</button>
+        <button class="tab" data-tab="diff">对比<span class="cnt" id="diffCnt" style="display:none">0</span></button>
+        <button class="tab" data-tab="history">历史</button>
+      </div>
+      <div class="top-right">
+        <button class="model-pill" id="modelPill"><span class="pulse"></span><span class="mn" id="modelName">DeepSeek · deepseek-chat</span><span style="color:var(--ink-3);font-weight:400">▾</span></button>
+        <button class="btn-ghost" id="btnExport">导出</button>
+        <button class="btn-brand" id="btnGoChat">✦ 对话修改</button>
+      </div>
+    </div>
+
+    <div class="views">
+      <!-- ===== EDIT ===== -->
+      <section class="view on" id="view-edit">
+        <div class="edit-grid">
+          <div class="pane code-pane">
+            <div class="pane-head">
+              <span class="chip-ruleset">⛨ Anthropic Skill 标准</span>
+              <span id="lintStatus"></span>
+              <span style="margin-left:auto" class="mono" id="editMeta"></span>
+            </div>
+            <div class="code-wrap" id="codeWrap"></div>
+            <div class="lint" id="lintPanel">
+              <div class="lint-head" id="lintHead">
+                <span class="arrow">▾</span><span id="lintTitle"></span>
+                <button class="btn-mini" id="btnAutoFix">✦ 自动整理</button>
+              </div>
+              <div class="lint-body" id="lintBody"></div>
+            </div>
+          </div>
+          <div class="pane chat-pane">
+            <div class="pane-head">
+              <span style="font-weight:600;color:var(--ink-2)">✦ 修改助手</span>
+              <span style="margin-left:auto">上下文：全文 + 规则 + 历史摘要</span>
+            </div>
+            <div class="chat-body" id="chatBody"></div>
+            <div id="applyBarSlot"></div>
+            <div class="quick-replies" id="quickReplies">
+              <button class="qr" data-q="把输出部分改得更强调 JSON 格式，删掉模糊词">⚡ 强化 JSON 输出</button>
+              <button class="qr" data-q="帮我精简冗余表达，删掉占位注释">✂ 精简冗余表达</button>
+              <button class="qr" data-q="补充一个输出示例，few-shot 约束格式">⌗ 补充输出示例</button>
+            </div>
+            <div class="chat-input">
+              <textarea id="chatInput" placeholder="描述你想怎么改，例如：把指令改成祈使句…"></textarea>
+              <button class="send-btn" id="btnSend" title="发送">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5m0 0-6 6m6-6 6 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DIFF ===== -->
+      <section class="view" id="view-diff">
+        <div class="diff-shell" id="diffShell"></div>
+      </section>
+
+      <!-- ===== HISTORY ===== -->
+      <section class="view" id="view-history">
+        <div class="hist-shell">
+          <div class="hist-head">
+            <h2>版本时间线</h2>
+            <span id="histSub"></span>
+          </div>
+          <div class="vline" id="vline"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROVIDER WIZARD MODAL ============ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="m-head"><h3 id="wizTitle">接入模型供应商</h3><button class="m-close" id="wizClose">✕</button></div>
+    <div class="wiz-steps" id="wizSteps">
+      <div class="wz cur"><i></i><span>供应商</span></div>
+      <div class="wz"><i></i><span>模型</span></div>
+      <div class="wz"><i></i><span>API Key</span></div>
+      <div class="wz"><i></i><span>测试</span></div>
+    </div>
+    <div class="wiz-body">
+      <div class="wz-pane on" data-step="0">
+        <div class="wz-title">选择供应商模板（协议细节自动匹配）</div>
+        <div class="prov-grid" id="provGrid"></div>
+      </div>
+      <div class="wz-pane" data-step="1">
+        <div class="wz-title">选择模型</div>
+        <div class="field"><label>模型</label><select id="modelSelect"></select><div class="hint">默认列表由模板拉取，也可选「自定义…」手动输入</div></div>
+        <div class="field" id="customModelField" style="display:none"><label>自定义模型名</label><input id="customModel" placeholder="例如 deepseek-chat-v3"></div>
+      </div>
+      <div class="wz-pane" data-step="2">
+        <div class="wz-title">粘贴 API Key</div>
+        <div class="field"><label>API Key</label><input id="apiKey" type="password" placeholder="sk-••••••••••••••••" autocomplete="off"><div class="hint">🔒 仅存储于系统凭据库，永不明文回显、不上传任何中间服务器</div></div>
+      </div>
+      <div class="wz-pane" data-step="3">
+        <div class="wz-title">测试连接</div>
+        <div class="test-box" id="testBox"></div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn-ghost" id="wizBack">← 上一步</button>
+      <div class="sp"></div>
+      <button class="btn-brand" id="wizNext">下一步 →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ================================================================
+   数据层 —— 贴近真实业务的模拟数据
+   ================================================================ */
+const FUZZY = ["尽量","可能","大概","也许","适当的","酌情","相关"];
+
+const FILES = [
+  {
+    id:"cockpit", name:"驾驶舱-主agent prompt.md", badge:"主 Agent",
+    desc:"统筹子智能体调度",
+    lines:[
+      "---",
+      "name: finance-cockpit",
+      "description: 财经驾驶舱主智能体，统筹子智能体调度",
+      "model: deepseek-chat",
+      "---",
+      "",
+      "# Role",
+      "你是财经驾驶舱主智能体，负责理解用户意图并调度子智能体。",
+      "",
+      "# Instructions",
+      "1. 收到请求后，先判断意图类型（行情 / 财报 / 宏观）。",
+      "2. 尽量保证输出为 JSON 格式。",
+      "3. 调用工具前，先检查参数完整性。",
+      "4. 子智能体返回后，汇总结果并给出结论。",
+      "5. 不确定时，向用户追问澄清。",
+      "",
+      "## Output",
+      "<!-- 输出示例待补充 -->",
+      "",
+      "## Constraints",
+      "- 不输出与投资无关的内容。",
+      "- 数据必须标注来源与日期。"
+    ],
+    versions:[
+      {v:"v1",title:"初稿",date:"2026-07-28 14:02",changes:0,acc:0,rej:0,cur:false,
+       summary:["手动创建，搭建基础骨架","定义 Role / Instructions / Constraints 三段结构"],
+       detail:[{k:"背景",t:"从飞书文档迁移而来，未做规则校验。"}],snapshot:null},
+      {v:"v2",title:"约束补全",date:"2026-07-31 09:47",changes:2,acc:2,rej:0,cur:false,
+       summary:["新增 Constraints 模块","补充数据来源标注要求"],
+       detail:[{k:"Why",t:"上游报表引用 agent 输出时缺少溯源信息。"},{k:"How",t:"追加 Constraints 两条，限定输出边界。"},{k:"Effect",t:"下游审计通过率提升，幻觉引用减少。"}],snapshot:null},
+      {v:"v3",title:"意图分类细化",date:"2026-08-02 16:20",changes:3,acc:2,rej:1,cur:true,
+       summary:["意图类型扩展为 行情/财报/宏观 三类","拒绝了「自动调用搜索」的变更——风险过高"],
+       detail:[{k:"Why",t:"单一意图导致子智能体路由错误率 18%。"},{k:"How",t:"改写 Instructions 第 1 条，枚举意图类型。"},{k:"Effect",t:"路由错误率降至 4%。"}],snapshot:null}
+    ]
+  },
+  {
+    id:"fin-agent", name:"财经子智能体-prompt.md", badge:"子 Agent",
+    desc:"财报数据提取与解读",
+    lines:[
+      "---",
+      "name: finance-agent",
+      "description: 财经数据子智能体",
+      "---",
+      "",
+      "# Instructions",
+      "你是财经子智能体，尽量保证输出 JSON。",
+      "调用工具前，先检查参数完整性。",
+      "",
+      "## Examples",
+      "<!-- 示例略 -->",
+      "",
+      "## Notes",
+      "- 可能的字段缺失时返回 error。"
+    ],
+    versions:[
+      {v:"v1",title:"初稿",date:"2026-07-30 11:15",changes:0,acc:0,rej:0,cur:true,
+       summary:["按 Anthropic Skill 骨架创建"],detail:[{k:"背景",t:"配合主 Agent 的财报意图路由。"}],snapshot:null}
+    ]
+  },
+  {
+    id:"web-search", name:"web-search-skill.md", badge:"Skill",
+    desc:"联网检索技能",
+    lines:[
+      "---",
+      "name: web-search",
+      "description: 联网检索技能，按规范输出引用",
+      "---",
+      "",
+      "# Workflow",
+      "1. 解析查询关键词。",
+      "2. 尽量控制检索轮次在 3 次以内。",
+      "3. 汇总来源并标注链接。",
+      "",
+      "## Failure",
+      "检索失败时，返回空结果并说明原因。"
+    ],
+    versions:[
+      {v:"v1",title:"初稿",date:"2026-08-01 10:08",changes:0,acc:0,rej:0,cur:true,
+       summary:["从 skill 模板库生成"],detail:[{k:"背景",t:"遵循 00-指标skill通用骨架规范 v3。"}],snapshot:null}
+    ]
+  }
+];
+FILES.forEach(f=>f.versions.forEach(v=>{ if(!v.snapshot) v.snapshot=f.lines.slice(); }));
+
+const PROVIDERS = [
+  {n:"OpenAI",c:"#10a37f",models:["gpt-4.1","gpt-4o-mini","o4-mini"]},
+  {n:"DeepSeek",c:"#4d6bfe",models:["deepseek-chat","deepseek-reasoner"]},
+  {n:"Anthropic",c:"#d97757",models:["claude-sonnet-4-5","claude-opus-4-1"]},
+  {n:"Gemini",c:"#4285f4",models:["gemini-2.5-pro","gemini-2.5-flash"]},
+  {n:"Moonshot Kimi",c:"#0f62fe",models:["kimi-k2-0905","moonshot-v1-128k"]},
+  {n:"通义千问",c:"#7c3aed",models:["qwen3-max","qwen-plus"]},
+  {n:"Ollama 本地",c:"#0f766e",models:["qwen3:14b","llama3.1:8b"]},
+  {n:"OpenRouter",c:"#f97316",models:["auto/router","自定义…"]}
+];
+
+/* ================================================================
+   状态
+   ================================================================ */
+const state = {
+  fileId:"cockpit",
+  tab:"edit",
+  candidate:null,          // {title,blocks[],tokens,cost,secs,model}
+  focusBlock:-1,
+  detailBlock:-1,
+  chatBusy:false,
+  wiz:{step:0,prov:null,model:null,key:""},
+  model:"DeepSeek · deepseek-chat"
+};
+const file = ()=>FILES.find(f=>f.id===state.fileId);
+const $ = s=>document.querySelector(s);
+
+/* ================================================================
+   工具
+   ================================================================ */
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function toast(msg,type="ok"){
+  const t=document.createElement("div");
+  t.className="toast "+type;
+  const ic=type==="ok"?"✓":type==="warn"?"!":"i";
+  t.innerHTML=`<span class="ic">${ic}</span><span>${esc(msg)}</span>`;
+  $("#toasts").appendChild(t);
+  setTimeout(()=>{t.classList.add("out");setTimeout(()=>t.remove(),320)},2800);
+}
+function hl(line){
+  if(/^\s*<!--/.test(line)) return `<span class="tok-c">${esc(line)}</span>`;
+  if(/^#{1,3}\s/.test(line)) return `<span class="tok-h">${esc(line)}</span>`;
+  if(/^\s*---\s*$/.test(line)) return `<span class="tok-p">${esc(line)}</span>`;
+  const m=line.match(/^(\s*)([\w-]+)(:)(.*)$/);
+  if(m&&!line.startsWith("-")) return `${m[1]}<span class="tok-k">${esc(m[2])}</span>:<span class="tok-s">${esc(m[4])}</span>`;
+  let out=esc(line);
+  FUZZY.forEach(w=>{ out=out.split(w).join(`<span class="squig">${w}</span>`); });
+  return out;
+}
+function lintOf(f){
+  const items=[];
+  f.lines.forEach((ln,i)=>FUZZY.forEach(w=>{ if(ln.includes(w)) items.push({line:i+1,word:w}); }));
+  return items;
+}
+
+/* ================================================================
+   侧栏
+   ================================================================ */
+function renderSidebar(filter=""){
+  const list=$("#fileList"); list.innerHTML="";
+  FILES.filter(f=>!filter||f.name.toLowerCase().includes(filter.toLowerCase())).forEach(f=>{
+    const pend=state.candidate&&f.id===state.fileId?state.candidate.blocks.filter(b=>b.state==="pending").length:0;
+    const el=document.createElement("div");
+    el.className="file-item"+(f.id===state.fileId?" on":"")+(pend?" dirty":"");
+    el.innerHTML=`<div class="file-ico">✎</div>
+      <div class="file-meta"><div class="file-name">${esc(f.name)}</div>
+      <div class="file-sub">${f.badge} · ${f.versions[f.versions.length-1].v} · ${f.lines.length} 行</div></div>
+      <span class="file-dot" title="有待处理候选修改"></span>`;
+    el.onclick=()=>{ state.fileId=f.id; state.candidate=null; state.detailBlock=-1; state.focusBlock=-1;
+      renderAll(); closeSidebar(); };
+    list.appendChild(el);
+  });
+}
+$("#fileSearch").addEventListener("input",e=>renderSidebar(e.target.value));
+$("#btnNewFile").onclick=()=>{
+  const n=FILES.length+1;
+  FILES.push({id:"draft-"+Date.now(),name:`未命名-prompt-${n}.md`,badge:"草稿",desc:"新建文件",
+    lines:["---","name: untitled","description: 待补充","---","","# Instructions",""],
+    versions:[{v:"v1",title:"初稿",date:nowStr(),changes:0,acc:0,rej:0,cur:true,summary:["新建草稿"],detail:[{k:"背景",t:"手动创建。"}],snapshot:["---","name: untitled","description: 待补充","---","","# Instructions",""]}]});
+  state.fileId=FILES[FILES.length-1].id; state.candidate=null;
+  renderAll(); toast("已创建新 Prompt 文件","info");
+};
+function nowStr(){
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ================================================================
+   编辑器
+   ================================================================ */
+function renderEditor(){
+  const f=file();
+  $("#crumbName").textContent=f.name;
+  $("#editMeta").textContent=`${f.lines.length} 行 · UTF-8 · Markdown`;
+  const wrap=$("#codeWrap"); wrap.innerHTML="";
+  f.lines.forEach((ln,i)=>{
+    const row=document.createElement("div"); row.className="cline";
+    row.innerHTML=`<span class="ln">${i+1}</span><span class="lc">${ln?hl(ln):"&nbsp;"}</span>`;
+    row.querySelector(".lc").onclick=()=>startEdit(row,i);
+    wrap.appendChild(row);
+  });
+  renderLint();
+}
+function startEdit(row,i){
+  if(row.classList.contains("editing")) return;
+  const f=file();
+  row.classList.add("editing");
+  const lc=row.querySelector(".lc");
+  const input=document.createElement("input");
+  input.className="line-input"; input.value=f.lines[i];
+  lc.replaceWith(input); input.focus(); input.setSelectionRange(input.value.length,input.value.length);
+  const commit=()=>{
+    f.lines[i]=input.value;
+    toast("已保存修改，规则引擎重新校验","info");
+    renderEditor(); renderSidebar($("#fileSearch").value);
+  };
+  input.onkeydown=e=>{
+    if(e.key==="Enter"){e.preventDefault();commit();}
+    if(e.key==="Escape"){renderEditor();}
+  };
+  input.onblur=commit;
+}
+function renderLint(){
+  const items=lintOf(file());
+  $("#lintStatus").innerHTML=items.length
+    ?`<span class="chip-warn">⚠ 实时校验 · ${items.length} 处提醒</span>`
+    :`<span class="chip-ok">✓ 规则校验通过</span>`;
+  $("#lintTitle").textContent=items.length?`风格规则 · ${items.length} 处可优化`:"未发现规则冲突";
+  $("#btnAutoFix").style.display=items.length?"":"none";
+  const body=$("#lintBody"); body.innerHTML="";
+  items.forEach(it=>{
+    const el=document.createElement("div"); el.className="lint-item";
+    el.innerHTML=`<span class="w">⚠</span><span class="no">第 ${it.line} 行</span><span>模糊词「${it.word}」削弱指令确定性（style/imperative-verbs）</span>`;
+    el.onclick=()=>{
+      const wrap=$("#codeWrap");
+      const row=wrap.children[it.line-1];
+      if(row){row.scrollIntoView({block:"center",behavior:"smooth"});row.style.background="rgba(217,119,6,.12)";setTimeout(()=>row.style.background="",900);}
+    };
+    body.appendChild(el);
+  });
+}
+$("#lintHead").onclick=e=>{
+  if(e.target.id==="btnAutoFix")return;
+  $("#lintPanel").classList.toggle("collapsed");
+};
+$("#btnAutoFix").onclick=e=>{
+  e.stopPropagation();
+  const f=file();let n=0;
+  f.lines=f.lines.map(ln=>{
+    let out=ln;
+    FUZZY.forEach(w=>{ if(out.includes(w)){out=out.split(w).join("");n++;} });
+    return out.replace(/，。/g,"。").replace(/，,/g,"，").replace(/ {2,}/g," ");
+  });
+  renderEditor(); toast(`自动整理完成，修复 ${n} 处模糊表达`);
+};
+
+/* ================================================================
+   聊天 —— 模拟流式 AI 修改
+   ================================================================ */
+function chatMsg(role,html){
+  const el=document.createElement("div");
+  el.className="msg "+role; el.innerHTML=html;
+  $("#chatBody").appendChild(el);
+  $("#chatBody").scrollTop=$("#chatBody").scrollHeight;
+  return el;
+}
+function chatStatus(text){
+  const el=document.createElement("div");
+  el.className="msg-status";
+  el.innerHTML=`<span class="dots"><i></i><i></i><i></i></span><span class="st">${esc(text)}</span>`;
+  $("#chatBody").appendChild(el);
+  $("#chatBody").scrollTop=$("#chatBody").scrollHeight;
+  return el;
+}
+function sendChat(text){
+  if(state.chatBusy||!text.trim())return;
+  state.chatBusy=true; $("#btnSend").disabled=true;
+  chatMsg("user",esc(text));
+  $("#chatInput").value="";
+  const st=chatStatus("注入全文上下文…");
+  const stages=["注入全文上下文…","检索规则集与历史摘要…","生成候选修改…","绑定 Why / How / Effect 说明…"];
+  let si=0;
+  const timer=setInterval(()=>{
+    si++;
+    if(si<stages.length){st.querySelector(".st").textContent=stages[si];}
+    else{
+      clearInterval(timer); st.remove();
+      streamReply(text);
+    }
+  },520);
+}
+function streamReply(userText){
+  const cand=buildCandidate(file(),userText);
+  const reply=`已按你的意图生成候选修改，共 <b>${cand.blocks.length} 处变更</b>。每处变更都已绑定 Why / How / Effect 说明，且 Diff 由内容差异实时计算——不信任我自报，可在对比视图逐块核验。`;
+  const el=chatMsg("ai","");
+  let i=0;const plain=reply;
+  const caret='<span class="caret"></span>';
+  const t=setInterval(()=>{
+    i+=3;
+    el.innerHTML=plain.slice(0,i)+(i<plain.length?caret:"");
+    $("#chatBody").scrollTop=$("#chatBody").scrollHeight;
+    if(i>=plain.length){
+      clearInterval(t);
+      state.candidate=cand;
+      state.chatBusy=false;$("#btnSend").disabled=false;
+      showApplyBar(cand);
+      updateDiffBadge();
+    }
+  },28);
+}
+function showApplyBar(cand){
+  $("#applyBarSlot").innerHTML=`<div class="apply-bar">
+    <span class="t">候选修改已就绪 · ${cand.blocks.length} 处变更</span>
+    <button class="apply-btn" id="btnApply">进入 Diff 对比 →</button></div>`;
+  $("#btnApply").onclick=()=>{ switchTab("diff"); };
+  $("#applyBarSlot").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+$("#btnSend").onclick=()=>sendChat($("#chatInput").value);
+$("#chatInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat(e.target.value);}
+});
+document.querySelectorAll(".qr").forEach(b=>b.onclick=()=>sendChat(b.dataset.q));
+$("#btnGoChat").onclick=()=>{
+  switchTab("edit");
+  $(".chat-input textarea").focus();
+  toast("在右侧描述你的修改意图","info");
+};
+
+/* ---------- 候选修改构造（基于真实文件内容） ---------- */
+function findLine(f,substr){ return f.lines.findIndex(l=>l.includes(substr)); }
+function buildCandidate(f,text){
+  const t=text.toLowerCase();
+  let scenario="json";
+  if(/精简|简洁|冗余|缩短|删除/.test(t)) scenario="slim";
+  else if(/示例|example|few/.test(t)) scenario="example";
+  const blocks=[];
+  if(scenario==="json"){
+    const fi=f.lines.findIndex(l=>FUZZY.some(w=>l.includes(w)));
+    if(fi>=0) blocks.push({type:"rep",anchor:fi,
+      before:[f.lines[fi]],
+      after:[f.lines[fi].replace(/尽量|可能|大概|也许/,"").replace("保证","始终以").replace(/。$/,"，字段不得缺失。").replace("为 JSON 格式","以 JSON 格式输出结果")],
+      why:"模糊词削弱指令确定性，触发风格规则 style/imperative-verbs。",
+      how:"删除模糊词，陈述式改祈使式，并补充字段完整性约束。",
+      effect:"输出格式更稳定，跨模型调用方差下降。"});
+    const ti=findLine(f,"检查参数完整性");
+    if(ti>=0) blocks.push({type:"add",anchor:ti,before:[],
+      after:["若参数缺失，返回 error 字段并列出缺失项，不得自行编造。"],
+      why:"工具调用的失败分支未定义，模型自由发挥空间大。",
+      how:"在参数校验指令后追加异常路径说明。",
+      effect:"调用失败可诊断、可恢复，减少静默错误。"});
+    blocks.push({type:"add",anchor:f.lines.length-1,before:[],
+      after:["","## Output Format","```json","{ \"intent\": \"...\", \"result\": {...}, \"error\": null }","```"],
+      why:"缺少输出契约示例，下游解析依赖隐式约定。",
+      how:"追加 JSON 输出示例段落，显式声明字段结构。",
+      effect:"few-shot 约束输出结构，解析失败率下降。"});
+    return {title:"指令强化 · JSON 输出",blocks,tokens:2113,cost:"¥0.03",secs:2.4};
+  }
+  if(scenario==="slim"){
+    f.lines.forEach((l,i)=>{ if(/^\s*<!--.*-->\s*$/.test(l)) blocks.push({type:"del",anchor:i,before:[l],after:[],
+      why:"占位注释对模型无指令价值，徒增 token。",
+      how:"删除 HTML 占位注释行。",
+      effect:"上下文更干净，每轮节省约 40 tokens。"}); });
+    const vi=f.lines.findIndex(l=>l.length>30&&!/^#/.test(l));
+    if(vi>=0) blocks.push({type:"rep",anchor:vi,before:[f.lines[vi]],
+      after:[f.lines[vi].split("，")[0]+"。"],
+      why:"长句包含多个子指令，模型易遗漏后半段。",
+      how:"拆取主干指令，删除修饰性从句。",
+      effect:"单句单义，指令遵循率提升。"});
+    if(!blocks.length) blocks.push({type:"del",anchor:f.lines.length-1,before:[f.lines[f.lines.length-1]],after:[],
+      why:"末行内容冗余。",how:"删除。",effect:"上下文更紧凑。"});
+    return {title:"精简冗余表达",blocks,tokens:986,cost:"¥0.01",secs:1.7};
+  }
+  /* example */
+  const hi=f.lines.findIndex(l=>/^##\s/.test(l));
+  blocks.push({type:"add",anchor:hi>=0?hi:f.lines.length-1,before:[],
+    after:["","### 输出示例","输入：查询贵州茅台最新财报","输出：{ \"intent\": \"财报\", \"symbol\": \"600519\", \"period\": \"latest\" }"],
+    why:"仅文字描述格式，模型理解存在偏差。",
+    how:"补充一对输入/输出 few-shot 示例。",
+    effect:"格式对齐速度提升，冷启动轮次减少。"});
+  return {title:"补充输出示例",blocks,tokens:1520,cost:"¥0.02",secs:2.1};
+}
+
+/* ================================================================
+   DIFF 视图
+   ================================================================ */
+function updateDiffBadge(){
+  const n=state.candidate?state.candidate.blocks.filter(b=>b.state==="pending").length:0;
+  const el=$("#diffCnt");
+  el.style.display=n?"":"none"; el.textContent=n;
+}
+function typeMeta(t){ return t==="add"?["＋ 新增","bt-add"]:t==="del"?["− 删除","bt-del"]:["~ 替换","bt-rep"]; }
+function renderDiff(){
+  const shell=$("#diffShell");
+  const cand=state.candidate;
+  if(!cand){
+    shell.innerHTML=`<div class="empty-diff">
+      <div class="empty-ico">⌘</div>
+      <h3>还没有候选修改</h3>
+      <p>在「编辑」页右侧的修改助手中描述你的意图，AI 会基于全文上下文生成候选修改，<br>然后回到这里逐块审阅、接受或拒绝。</p>
+      <button class="btn-brand" onclick="switchTab('edit')">← 去对话生成候选修改</button>
+    </div>`;
+    return;
+  }
+  const pend=cand.blocks.filter(b=>b.state==="pending").length;
+  const acc=cand.blocks.filter(b=>b.state==="accepted").length;
+  const rej=cand.blocks.filter(b=>b.state==="rejected").length;
+  const adds=cand.blocks.reduce((s,b)=>s+b.after.length,0);
+  const dels=cand.blocks.reduce((s,b)=>s+b.before.length,0);
+  const done=pend===0;
+  shell.innerHTML=`
+    <div class="diff-toolbar">
+      <button class="tb-btn primary" id="accAll" ${pend?"":"disabled"}>接受全部</button>
+      <button class="tb-btn danger" id="rejAll" ${pend?"":"disabled"}>拒绝全部</button>
+      <button class="tb-btn" id="prevB">↑ 上一处</button>
+      <button class="tb-btn" id="nextB">↓ 下一处</button>
+      <span class="tb-stats">${cand.blocks.length} 处修改 · <span class="c-g">+${adds}</span> <span class="c-r">−${dels}</span> · ~${(cand.tokens/1000).toFixed(1)}k tokens · ${cand.cost}</span>
+    </div>
+    <div class="progress"><i style="width:${(acc+rej)/cand.blocks.length*100}%"></i></div>
+    <div class="diff-body">
+      <div class="diff-scroll" id="diffScroll"></div>
+      <div class="detail-panel ${state.detailBlock<0?"empty":""}" id="detailPanel"></div>
+    </div>
+    <div class="diff-foot">
+      <span>变更块 <b>${cand.blocks.length}</b></span>
+      <span>已接受 <b class="c-g">${acc}</b></span>
+      <span>已拒绝 <b class="c-r">${rej}</b></span>
+      <span>待处理 <b style="color:var(--amber)">${pend}</b></span>
+      <span style="margin-left:auto"><kbd>N</kbd>/<kbd>P</kbd> 跳转 · <kbd>Enter</kbd> 详情 · <kbd>A</kbd> 接受 · <kbd>R</kbd> 拒绝</span>
+    </div>
+    <div class="snap-bar ${done&&acc>0?"show":""}">
+      <div><div class="t">所有变更已决策完毕</div><div class="s">接受 ${acc} 处 · 拒绝 ${rej} 处 —— 生成快照后可在历史中回溯</div></div>
+      <button class="btn-green" id="btnSnap">✓ 生成版本快照</button>
+    </div>`;
+  const scroll=$("#diffScroll");
+  cand.blocks.forEach((b,i)=>{
+    const [label,cls]=typeMeta(b.type);
+    const card=document.createElement("div");
+    card.className="block-card "+b.state+(i===state.focusBlock?" focus":"");
+    card.dataset.i=i;
+    const statePill=b.state==="pending"?'<span class="state-pill sp-pending">待决策</span>'
+      :b.state==="accepted"?'<span class="state-pill sp-ok">✓ 已接受</span>'
+      :'<span class="state-pill sp-no">✕ 已拒绝</span>';
+    const ops=b.state==="pending"?`<span class="mini-ops">
+        <button class="op-btn ok" title="接受 (A)" data-act="acc">✓</button>
+        <button class="op-btn no" title="拒绝 (R)" data-act="rej">✕</button></span>`:"";
+    card.innerHTML=`
+      <div class="block-head">
+        <span class="b-type ${cls}">${label}</span>
+        <span class="loc">第 ${b.anchor+1} 行附近</span>
+        <span class="block-state">${statePill}${ops}</span>
+      </div>
+      <div class="diff-grid">
+        <div class="diff-col"><div class="dcol-tag">修改前</div>${
+          b.before.length?b.before.map(l=>`<div class="dline d-del"><span class="badge b-del">−</span><span class="lc dc">${esc(l)||"&nbsp;"}</span></div>`).join("")
+          :'<div class="d-empty">（纯新增，无旧内容）</div>'}</div>
+        <div class="diff-col"><div class="dcol-tag">修改后</div>${
+          b.after.length?b.after.map(l=>`<div class="dline d-add"><span class="badge b-add">＋</span><span class="lc">${esc(l)||"&nbsp;"}</span></div>`).join("")
+          :'<div class="d-empty">（已删除）</div>'}</div>
+      </div>`;
+    card.onclick=e=>{
+      const act=e.target.dataset?.act;
+      if(act){ decide(i,act==="acc"); return; }
+      state.focusBlock=i; state.detailBlock=i; renderDiff();
+    };
+    scroll.appendChild(card);
+  });
+  renderDetail();
+  $("#accAll").onclick=()=>{ cand.blocks.forEach(b=>{if(b.state==="pending")b.state="accepted";}); afterDecide("已接受全部变更"); };
+  $("#rejAll").onclick=()=>{ cand.blocks.forEach(b=>{if(b.state==="pending")b.state="rejected";}); afterDecide("已拒绝全部变更","warn"); };
+  $("#prevB").onclick=()=>jump(-1);
+  $("#nextB").onclick=()=>jump(1);
+  const snap=$("#btnSnap");
+  if(snap) snap.onclick=makeSnapshot;
+  updateDiffBadge();
+}
+function renderDetail(){
+  const p=$("#detailPanel");
+  const cand=state.candidate;
+  if(state.detailBlock<0||!cand){
+    p.className="detail-panel empty";
+    p.innerHTML=`<div><div style="font-size:26px;margin-bottom:10px">⌕</div>点击左侧任意变更块<br>查看 Why / How / Effect 修改日志</div>`;
+    return;
+  }
+  p.className="detail-panel";
+  const b=cand.blocks[state.detailBlock];
+  const [label,cls]=typeMeta(b.type);
+  const decided=b.state!=="pending";
+  p.innerHTML=`
+    <span class="gt-type">${label} · 第 ${b.anchor+1} 行</span>
+    <div class="gt-h">修改日志 <span style="font-size:10px;color:var(--ink-3);font-weight:400">（与 Diff 绑定校验 ✓）</span></div>
+    <div><div class="gt-sec">Why · 为何修改</div><p class="gt-p" contenteditable="true" data-k="why">${esc(b.why)}</p></div>
+    <div><div class="gt-sec">How · 如何修改</div><p class="gt-p" contenteditable="true" data-k="how">${esc(b.how)}</p></div>
+    <div><div class="gt-sec">Effect · 预期效果</div><p class="gt-p" contenteditable="true" data-k="effect">${esc(b.effect)}</p></div>
+    <div class="edit-hint">✎ 说明可直接编辑，把模型的话改写成自己的话</div>
+    <div class="gt-meta">${state.model.split(" · ")[1]||"deepseek-chat"} · ${cand.secs}s · ${cand.tokens.toLocaleString()} tok · ${cand.cost}</div>
+    <div class="gt-ops">
+      <button class="gt-accept" id="gtAcc" ${decided?"disabled":""}>✓ 接受此块</button>
+      <button class="gt-reject" id="gtRej" ${decided?"disabled":""}>✕ 拒绝</button>
+    </div>`;
+  p.querySelectorAll(".gt-p").forEach(el=>{
+    el.onblur=()=>{ b[el.dataset.k]=el.textContent; toast("修改说明已更新","info"); };
+  });
+  $("#gtAcc").onclick=()=>decide(state.detailBlock,true);
+  $("#gtRej").onclick=()=>decide(state.detailBlock,false);
+}
+function decide(i,accept){
+  const b=state.candidate.blocks[i];
+  if(b.state!=="pending")return;
+  b.state=accept?"accepted":"rejected";
+  afterDecide(accept?`已接受变更块 #${i+1}`:`已拒绝变更块 #${i+1}`, accept?"ok":"warn");
+}
+function afterDecide(msg,type="ok"){
+  toast(msg,type);
+  const pend=state.candidate?state.candidate.blocks.filter(b=>b.state==="pending").length:0;
+  if(pend===0&&state.detailBlock>=0) state.detailBlock=state.detailBlock; // keep
+  renderDiff(); renderSidebar($("#fileSearch").value);
+}
+function jump(dir){
+  const cand=state.candidate; if(!cand)return;
+  let i=state.focusBlock;
+  for(let k=0;k<cand.blocks.length;k++){
+    i=(i+dir+cand.blocks.length)%cand.blocks.length;
+    if(cand.blocks[i].state==="pending")break;
+  }
+  state.focusBlock=i; state.detailBlock=i; renderDiff();
+  const card=document.querySelector(`.block-card[data-i="${i}"]`);
+  if(card)card.scrollIntoView({block:"center",behavior:"smooth"});
+}
+document.addEventListener("keydown",e=>{
+  if(state.tab!=="diff"||!state.candidate)return;
+  if(["INPUT","TEXTAREA"].includes(e.target.tagName)||e.target.isContentEditable)return;
+  const k=e.key.toLowerCase();
+  if(k==="n")jump(1); else if(k==="p")jump(-1);
+  else if(k==="a"&&state.focusBlock>=0)decide(state.focusBlock,true);
+  else if(k==="r"&&state.focusBlock>=0)decide(state.focusBlock,false);
+  else if(k==="enter"&&state.focusBlock>=0){state.detailBlock=state.focusBlock;renderDiff();}
+});
+
+/* ---------- 版本快照 ---------- */
+function applyBlock(f,b){
+  if(b.state!=="accepted")return;
+  if(b.type==="rep") f.lines.splice(b.anchor,b.before.length,...b.after);
+  else if(b.type==="add") f.lines.splice(b.anchor+1,0,...b.after);
+  else if(b.type==="del") f.lines.splice(b.anchor,b.before.length);
+}
+function makeSnapshot(){
+  const f=file(),cand=state.candidate;
+  const acc=cand.blocks.filter(b=>b.state==="accepted");
+  const rej=cand.blocks.filter(b=>b.state==="rejected");
+  [...cand.blocks].sort((a,b)=>b.anchor-a.anchor).forEach(b=>applyBlock(f,b));
+  f.versions.forEach(v=>v.cur=false);
+  const nv="v"+(f.versions.length+1);
+  f.versions.push({
+    v:nv,title:cand.title,date:nowStr(),
+    changes:cand.blocks.length,acc:acc.length,rej:rej.length,cur:true,
+    summary:acc.slice(0,3).map(b=>b.why.replace(/。$/,"")),
+    detail:acc.map(b=>({k:"Why",t:b.why})).concat(acc.map(b=>({k:"Effect",t:b.effect}))).slice(0,5),
+    snapshot:f.lines.slice()
+  });
+  state.candidate=null; state.detailBlock=-1; state.focusBlock=-1;
+  $("#applyBarSlot").innerHTML="";
+  chatMsg("ai",`已生成版本快照 <b>${nv}</b>，可在「历史」中查看完整演进叙事。`);
+  renderAll(); switchTab("history");
+  toast(`版本 ${nv} 已沉淀 · 接受 ${acc.length} / 拒绝 ${rej.length}`);
+}
+
+/* ================================================================
+   历史视图
+   ================================================================ */
+function renderHistory(){
+  const f=file();
+  $("#histSub").textContent=`${f.name} · 共 ${f.versions.length} 个版本 · 扫一眼摘要即可恢复上下文`;
+  const vl=$("#vline"); vl.innerHTML="";
+  [...f.versions].reverse().forEach((v,ri)=>{
+    const idx=f.versions.length-1-ri;
+    const card=document.createElement("div");
+    card.className="v-card"+(v.cur?" current":"");
+    card.innerHTML=`
+      <div class="v-top">
+        <span class="v-tag">${v.v}</span>
+        <span class="v-title">${esc(v.title)}</span>
+        ${v.cur?'<span class="v-cur">当前</span>':""}
+        <span class="v-date">${v.date}</span>
+      </div>
+      <div class="v-stats">
+        <span>变更 <b>${v.changes}</b></span>
+        <span class="c-g">接受 <b>${v.acc}</b></span>
+        <span class="c-r">拒绝 <b>${v.rej}</b></span>
+      </div>
+      <div class="v-sum"><span class="ai-tag">AI 迭代摘要</span><br>${v.summary.map(s=>"· "+esc(s)).join("<br>")}</div>
+      <div class="v-detail">${v.detail.map(d=>`<div class="vd-item"><b>${d.k}</b>${esc(d.t)}</div>`).join("")}</div>
+      <div class="v-ops">
+        <button data-op="expand">展开全部 Why / How / Effect</button>
+        ${v.cur?"":'<button class="rb" data-op="rollback">回滚到此版本</button>'}
+      </div>`;
+    card.querySelector('[data-op="expand"]').onclick=e=>{
+      card.classList.toggle("expanded");
+      e.target.textContent=card.classList.contains("expanded")?"收起详情":"展开全部 Why / How / Effect";
+    };
+    const rb=card.querySelector('[data-op="rollback"]');
+    if(rb) rb.onclick=()=>{
+      if(rb.dataset.armed){
+        f.lines=v.snapshot.slice();
+        f.versions.forEach(x=>x.cur=false); v.cur=true;
+        state.candidate=null;
+        renderAll();
+        toast(`已回滚到 ${v.v}（内容已恢复，快照未丢失）`,"warn");
+      }else{
+        rb.dataset.armed="1"; rb.textContent="确认回滚？内容将恢复到此快照"; rb.classList.add("confirm");
+        setTimeout(()=>{ if(rb.isConnected){delete rb.dataset.armed;rb.textContent="回滚到此版本";rb.classList.remove("confirm");} },3000);
+      }
+    };
+    vl.appendChild(card);
+  });
+}
+
+/* ================================================================
+   视图切换 & 顶栏
+   ================================================================ */
+function switchTab(tab){
+  state.tab=tab;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===tab));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  $("#view-"+tab).classList.add("on");
+  if(tab==="diff")renderDiff();
+  if(tab==="history")renderHistory();
+  if(tab==="edit")renderEditor();
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+$("#btnExport").onclick=()=>{
+  const f=file();
+  const blob=new Blob([f.lines.join("\n")],{type:"text/markdown"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=f.name; a.click();
+  URL.revokeObjectURL(a.href);
+  toast("已导出 Markdown 文件");
+};
+
+/* ---------- 移动端侧栏 ---------- */
+const sidebar=$("#sidebar"),backdrop=$("#backdrop");
+function closeSidebar(){sidebar.classList.remove("open");backdrop.classList.remove("show");}
+$("#burger").onclick=()=>{sidebar.classList.add("open");backdrop.classList.add("show");};
+backdrop.onclick=closeSidebar;
+
+/* ================================================================
+   模型接入向导
+   ================================================================ */
+function renderWiz(){
+  const w=state.wiz;
+  document.querySelectorAll("#wizSteps .wz").forEach((el,i)=>{
+    el.classList.toggle("done",i<w.step);
+    el.classList.toggle("cur",i===w.step);
+  });
+  document.querySelectorAll(".wz-pane").forEach(p=>p.classList.toggle("on",+p.dataset.step===w.step));
+  $("#wizBack").style.visibility=w.step===0?"hidden":"visible";
+  $("#wizNext").textContent=w.step===3?"完成 ✓":"下一步 →";
+  $("#wizNext").disabled=(w.step===0&&!w.prov)||(w.step===1&&!w.model)||(w.step===2&&w.key.length<8);
+  if(w.step===0){
+    const g=$("#provGrid"); g.innerHTML="";
+    PROVIDERS.forEach(p=>{
+      const c=document.createElement("div");
+      c.className="prov-cell"+(w.prov===p.n?" sel":"");
+      c.innerHTML=`<i style="background:${p.c}"></i>${p.n}`;
+      c.onclick=()=>{ w.prov=p.n; w.model=null; renderWiz(); };
+      g.appendChild(c);
+    });
+  }
+  if(w.step===1){
+    const prov=PROVIDERS.find(p=>p.n===w.prov);
+    const sel=$("#modelSelect"); sel.innerHTML="";
+    (prov?prov.models:["自定义…"]).concat(prov&&prov.models.includes("自定义…")?[]:["自定义…"]).forEach(m=>{
+      const o=document.createElement("option"); o.value=o.textContent=m; sel.appendChild(o);
+    });
+    sel.value=w.model||sel.options[0].value; w.model=sel.value;
+    $("#customModelField").style.display=sel.value==="自定义…"?"":"none";
+    sel.onchange=()=>{ w.model=sel.value; $("#customModelField").style.display=sel.value==="自定义…"?"":"none"; renderWizNextState(); };
+    $("#customModel").oninput=e=>{ w.model=e.target.value||"自定义模型"; renderWizNextState(); };
+  }
+  if(w.step===2){
+    $("#apiKey").value=w.key;
+    $("#apiKey").oninput=e=>{ w.key=e.target.value.trim(); renderWizNextState(); };
+  }
+  if(w.step===3) renderTestIdle();
+}
+function renderWizNextState(){
+  const w=state.wiz;
+  $("#wizNext").disabled=(w.step===0&&!w.prov)||(w.step===1&&!w.model)||(w.step===2&&w.key.length<8);
+}
+function renderTestIdle(){
+  $("#testBox").innerHTML=`
+    <div style="font-size:26px;margin-bottom:10px">⌁</div>
+    <div class="tt">准备就绪</div>
+    <div class="ts">${esc(state.wiz.prov)} · ${esc(state.wiz.model)}</div>
+    <button class="btn-brand" style="margin-top:16px" id="btnTest">开始测试连接</button>`;
+  $("#btnTest").onclick=runTest;
+}
+function runTest(){
+  $("#testBox").innerHTML=`<div class="test-spin"></div><div class="tt">正在连接 ${esc(state.wiz.prov)} 端点…</div><div class="ts">握手 → 鉴权 → 拉取模型元信息</div>`;
+  $("#wizNext").disabled=true;
+  setTimeout(()=>{
+    $("#testBox").innerHTML=`<div class="test-ok">✓</div><div class="tt">连接成功</div><div class="ts">延迟 234ms · 模型可用 · 余额充足（模拟）</div>`;
+    $("#wizNext").disabled=false;
+  },1400);
+}
+$("#modelPill").onclick=()=>{
+  state.wiz={step:0,prov:null,model:null,key:""};
+  $("#overlay").classList.add("show"); renderWiz();
+};
+$("#wizClose").onclick=()=>$("#overlay").classList.remove("show");
+$("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay")$("#overlay").classList.remove("show"); });
+$("#wizBack").onclick=()=>{ if(state.wiz.step>0){state.wiz.step--;renderWiz();} };
+$("#wizNext").onclick=()=>{
+  const w=state.wiz;
+  if(w.step<3){ w.step++; renderWiz(); }
+  else{
+    state.model=`${w.prov} · ${w.model}`;
+    $("#modelName").textContent=state.model;
+    $("#overlay").classList.remove("show");
+    toast(`已切换到 ${w.prov} · ${w.model}，密钥已存入系统凭据库`);
+  }
+};
+
+/* ================================================================
+   初始化
+   ================================================================ */
+function renderAll(){
+  renderSidebar($("#fileSearch").value);
+  renderEditor(); renderHistory(); renderDiff(); updateDiffBadge();
+}
+chatMsg("ai","你好，我是修改助手。当前文档的<b>全文 + 规则集 + 历史摘要</b>已注入上下文。<br>试试下方快捷指令，或直接描述你的修改意图。");
+renderAll();
+setTimeout(()=>toast("欢迎回来！上次迭代停在 v3，规则引擎发现 2 处可优化","info"),700);
+</script>
+</body>
+</html>

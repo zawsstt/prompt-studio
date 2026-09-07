@@ -1,0 +1,126 @@
+/* ============================================================
+   PROMPTSTUDIO — Design Tokens
+   Central CSS variable system for the entire application.
+   Dark-themed professional IDE, Indigo brand.
+   ============================================================ */
+
+:root {
+  /* ── Brand ── */
+  --brand: #6366F1;
+  --brand-hover: #818CF8;
+  --brand-active: #4F46E5;
+  --brand-glow: rgba(99, 102, 241, 0.25);
+  --brand-glow-strong: rgba(99, 102, 241, 0.45);
+  --brand-muted: rgba(99, 102, 241, 0.12);
+
+  /* ── Surface (dark gradient stack) ── */
+  --surface-0: #0B0B12;        /* deepest background */
+  --surface-1: #111118;        /* sidebar, topbar */
+  --surface-2: #18181F;        /* cards, panels */
+  --surface-3: #1E1E28;        /* inputs, hover states */
+  --surface-4: #262632;        /* elevated surfaces */
+  --surface-5: #2E2E3A;        /* highest elevation */
+
+  /* ── Borders ── */
+  --border: #2A2A38;
+  --border-light: #333348;
+  --border-hover: #454560;
+  --border-focus: #6366F1;
+
+  /* ── Text ── */
+  --text-primary: #E8E8ED;
+  --text-secondary: #A0A0B0;
+  --text-muted: #6B6B80;
+  --text-inverse: #0B0B12;
+  --text-link: #818CF8;
+
+  /* ── Diff Semantic Colors ── */
+  --diff-add: #16A34A;
+  --diff-add-bg: rgba(22, 163, 74, 0.12);
+  --diff-add-border: rgba(22, 163, 74, 0.35);
+  --diff-add-text: #4ADE80;
+
+  --diff-del: #DC2626;
+  --diff-del-bg: rgba(220, 38, 38, 0.12);
+  --diff-del-border: rgba(220, 38, 38, 0.35);
+  --diff-del-text: #F87171;
+
+  --diff-replace: #2563EB;
+  --diff-replace-bg: rgba(37, 99, 235, 0.12);
+  --diff-replace-border: rgba(37, 99, 235, 0.35);
+  --diff-replace-text: #60A5FA;
+
+  --diff-reorder: #D97706;
+  --diff-reorder-bg: rgba(217, 119, 6, 0.12);
+  --diff-reorder-border: rgba(217, 119, 6, 0.35);
+  --diff-reorder-text: #FBBF24;
+
+  /* ── Semantic ── */
+  --success: #16A34A;
+  --success-bg: rgba(22, 163, 74, 0.12);
+  --warning: #EAB308;
+  --warning-bg: rgba(234, 179, 8, 0.12);
+  --error: #EF4444;
+  --error-bg: rgba(239, 68, 68, 0.12);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.12);
+
+  /* ── Glassmorphism ── */
+  --glass-bg: rgba(24, 24, 31, 0.85);
+  --glass-bg-light: rgba(30, 30, 40, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: 16px;
+  --glass-blur-heavy: 24px;
+
+  /* ── Layout Dimensions ── */
+  --nav-w: 48px;
+  --topbar-h: 40px;
+  --chat-w: 380px;
+  --chat-w-min: 280px;
+  --chat-w-max: 520px;
+  --modlog-w: 420px;
+
+  /* ── Radii ── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* ── Typography ── */
+  --font-ui: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', -apple-system, system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --line-height: 1.55;
+
+  /* ── Transitions (Motion.Lab curated) ── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --fast: 100ms;
+  --normal: 180ms;
+  --slow: 260ms;
+  --slower: 350ms;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.6);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.7);
+  --shadow-glow: 0 0 20px var(--brand-glow);
+
+  /* ── Z-index scale ── */
+  --z-panel: 100;
+  --z-overlay: 200;
+  --z-dropdown: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+}

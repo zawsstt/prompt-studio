@@ -1,0 +1,311 @@
+/* ============================================
+   PromptStudio 滚动叙事联动 CSS
+   配合 scroll-narrative.js 使用
+   ============================================ */
+
+/* ========== 工作闭环步骤激活 ========== */
+.loop-step {
+  opacity: 0.3;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loop-step.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 激活态增强：边框光晕 */
+.loop-step.active {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.15),
+              0 8px 24px rgba(99,102,241,0.12);
+}
+
+/* ========== Diff 行级高亮渐进显现 ========== */
+.diff-line {
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.diff-line.highlight {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Diff 类型着色保持可见性 */
+.diff-line[data-type="added"] {
+  border-left: 3px solid var(--green);
+  background: rgba(22, 163, 74, 0.05);
+}
+
+.diff-line[data-type="removed"] {
+  border-left: 3px solid var(--red);
+  background: rgba(220, 38, 38, 0.05);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.diff-line[data-type="replaced"] {
+  border-left: 3px solid var(--blue);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.diff-line[data-type="reordered"] {
+  border-left: 3px solid var(--amber);
+  background: rgba(217, 119, 6, 0.05);
+}
+
+/* 高亮后强化左侧指示条 */
+.diff-line.highlight::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  opacity: 0;
+  animation: glowIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes glowIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ========== 信任机制说明面板滑入 ========== */
+.detail-panel {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.4s ease-out;
+}
+
+.detail-panel.slide-in {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* 面板内容级联出现 */
+.detail-panel.slide-in .panel-section {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.detail-panel.slide-in .panel-section:nth-child(1) { animation-delay: 0.1s; }
+.detail-panel.slide-in .panel-section:nth-child(2) { animation-delay: 0.2s; }
+.detail-panel.slide-in .panel-section:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== 供应商标识依次出现 ========== */
+.prov {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* JS 控制单独触发，这里只定义最终态 */
+
+/* ========== 版本时间线节点点亮 ========== */
+.tl-node {
+  opacity: 0.4;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tl-node.lit {
+  opacity: 1;
+}
+
+.tl-node .tl-dot {
+  transform: scale(0.85);
+  opacity: 0.5;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.5s ease-out;
+}
+
+.tl-node.lit .tl-dot {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 当前版本节点特殊处理：橙色光晕脉冲 */
+.tl-node.cur.lit .tl-dot {
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15),
+              0 0 16px rgba(249, 115, 22, 0.3);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15),
+                0 0 16px rgba(249, 115, 22, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.25),
+                0 0 24px rgba(249, 115, 22, 0.5);
+  }
+}
+
+/* ========== 导航当前章节指示增强 ========== */
+.nav-links a {
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.nav-links a.on {
+  color: var(--ink);
+}
+
+/* 靛蓝光点指示 */
+.nav-links a.on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.7);
+  animation: navDotIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes navDotIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* ========== 滚动进度条增强 ========== */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  z-index: 300;
+  background: var(--brand-gradient);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* ========== Bento 指标激活（保留原有逻辑） ========== */
+.bento {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 指标内部元素级联 */
+.bento.in .b-m,
+.bento.in .b-s {
+  animation: bentoFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.bento.in .b-m { animation-delay: 0.1s; }
+.bento.in .b-s:nth-child(1) { animation-delay: 0.2s; }
+.bento.in .b-s:nth-child(2) { animation-delay: 0.3s; }
+
+@keyframes bentoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== 减少动效模式尊重 ========== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 保持布局，移除动画 */
+  .loop-step,
+  .diff-line,
+  .detail-panel,
+  .prov,
+  .tl-node {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .progress {
+    transition: none !important;
+  }
+}
+
+/* ========== 移动端适配 ========== */
+@media (max-width: 768px) {
+  /* 缩短动画时长，提升响应感 */
+  .loop-step,
+  .diff-line {
+    transition-duration: 0.4s;
+  }
+
+  .detail-panel {
+    transition-duration: 0.4s;
+  }
+
+  /* 移动端减少级联延迟 */
+  .detail-panel.slide-in .panel-section:nth-child(1) { animation-delay: 0.05s; }
+  .detail-panel.slide-in .panel-section:nth-child(2) { animation-delay: 0.1s; }
+  .detail-panel.slide-in .panel-section:nth-child(3) { animation-delay: 0.15s; }
+
+  /* 时间线节点点亮加速 */
+  .tl-node {
+    transition-duration: 0.4s;
+  }
+}
+
+/* ========== 调试辅助类（开发时使用） ========== */
+.debug-scroll .loop-step,
+.debug-scroll .diff-line,
+.debug-scroll .tl-node {
+  outline: 2px dashed rgba(255, 0, 0, 0.3);
+  outline-offset: 4px;
+}
+
+.debug-scroll .loop-step.active {
+  outline-color: rgba(0, 255, 0, 0.5);
+}
+
+/* 在 body 添加 .debug-scroll 类即可启用调试边框 */
