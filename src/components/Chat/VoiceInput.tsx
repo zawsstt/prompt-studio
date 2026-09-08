@@ -11,12 +11,11 @@ interface VoiceInputProps {
   currentInput: string;
 }
 
-// 兼容 WebkitSpeechRecognition
-const SpeechRecognitionClass =
-  typeof window !== 'undefined'
-    ? (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ||
-      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition
-    : null;
+function getSpeechRecognition() {
+  if (typeof window === 'undefined') return null;
+  const win = window as any;
+  return win.SpeechRecognition || win.webkitSpeechRecognition || null;
+}
 
 export default function VoiceInput({
   disabled = false,
@@ -29,10 +28,10 @@ export default function VoiceInput({
   const [finalAccumulated, setFinalAccumulated] = useState('');
   const recognitionRef = useRef<any>(null);
   const isManuallyStopped = useRef(false);
-
-  const isSupported = !!SpeechRecognitionClass;
+  const liveTranscriptRef = useRef('');
 
   const startListening = () => {
+    const SpeechRecognitionClass = getSpeechRecognition();
     if (!SpeechRecognitionClass) {
       toast('当前浏览器暂不支持语音识别 API，建议使用 Chrome/Edge 浏览器', 'error');
       return;
@@ -49,6 +48,8 @@ export default function VoiceInput({
       isManuallyStopped.current = false;
       setInterimText('');
       setFinalAccumulated('');
+      liveTranscriptRef.current = '';
+      setIsListening(true);
 
       rec.onstart = () => {
         setIsListening(true);
@@ -69,13 +70,20 @@ export default function VoiceInput({
         }
 
         if (finalized) {
-          setFinalAccumulated(prev => (prev ? `${prev} ${finalized}` : finalized));
+          setFinalAccumulated(prev => {
+            const next = prev ? `${prev} ${finalized}` : finalized;
+            liveTranscriptRef.current = next;
+            return next;
+          });
         }
         setInterimText(interim);
+        if (interim) {
+          liveTranscriptRef.current = (liveTranscriptRef.current + ' ' + interim).trim();
+        }
       };
 
       rec.onerror = (event: any) => {
-        const error = event.error;
+        const error = event?.error;
         if (error === 'not-allowed' || error === 'service-not-allowed') {
           toast('麦克风权限被拒绝，请在地址栏允许麦克风权限', 'error');
           stopListening();
@@ -83,14 +91,14 @@ export default function VoiceInput({
           toast('未检测到可用的麦克风设备', 'error');
           stopListening();
         } else if (error === 'network') {
-          toast('语音识别网络异常，请重试', 'error');
+          // 在未说话静音或部分网络重试时避免直接崩溃断开
+          console.warn('Speech recognition network event:', event);
         }
       };
 
       rec.onend = () => {
-        if (!isManuallyStopped.current && isListening) {
-          setIsListening(false);
-        } else {
+        // 允许持续或平滑自然结束
+        if (isManuallyStopped.current) {
           setIsListening(false);
         }
       };
@@ -125,7 +133,8 @@ export default function VoiceInput({
 
   // 确认并填入输入框
   const handleApplyToInput = () => {
-    const speechResult = (finalAccumulated + (interimText ? ` ${interimText}` : '')).trim();
+    const rawResult = document.querySelector('.voice-transcript-text')?.textContent || '';
+    const speechResult = (rawResult || liveTranscriptRef.current || (finalAccumulated + (interimText ? ` ${interimText}` : ''))).trim();
     if (speechResult) {
       const combined = currentInput ? `${currentInput} ${speechResult}` : speechResult;
       onTranscriptChange(combined);
@@ -134,11 +143,13 @@ export default function VoiceInput({
     stopListening();
     setInterimText('');
     setFinalAccumulated('');
+    liveTranscriptRef.current = '';
   };
 
   // 确认并直接发送
   const handleSendNow = () => {
-    const speechResult = (finalAccumulated + (interimText ? ` ${interimText}` : '')).trim();
+    const rawResult = document.querySelector('.voice-transcript-text')?.textContent || '';
+    const speechResult = (rawResult || liveTranscriptRef.current || (finalAccumulated + (interimText ? ` ${interimText}` : ''))).trim();
     if (speechResult) {
       const toSend = currentInput ? `${currentInput} ${speechResult}` : speechResult;
       if (onSendDirectly) {
@@ -150,6 +161,7 @@ export default function VoiceInput({
     stopListening();
     setInterimText('');
     setFinalAccumulated('');
+    liveTranscriptRef.current = '';
   };
 
   const handleCancel = () => {
@@ -169,6 +181,7 @@ export default function VoiceInput({
   }, []);
 
   const fullLiveText = (finalAccumulated + (interimText ? ` ${interimText}` : '')).trim();
+  const isSupported = !!getSpeechRecognition();
 
   return (
     <div className="voice-input-wrapper">

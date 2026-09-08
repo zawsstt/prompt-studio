@@ -20,7 +20,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     extraHeaders: {},
     iconBg: '#4C6EF5',
     iconText: 'DS',
-    iconUrl: '/icons/deepseek.ico',
+    iconUrl: './icons/deepseek.ico',
   },
   {
     providerId: 'openai',
@@ -41,7 +41,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     extraHeaders: {},
     iconBg: '#10A37F',
     iconText: 'OA',
-    iconUrl: '/icons/openai.png',
+    iconUrl: './icons/openai.png',
   },
   {
     providerId: 'anthropic',
@@ -63,7 +63,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     },
     iconBg: '#D97706',
     iconText: 'AN',
-    iconUrl: '/icons/anthropic.svg',
+    iconUrl: './icons/anthropic.svg',
   },
   {
     providerId: 'gemini',
@@ -83,7 +83,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     extraHeaders: {},
     iconBg: '#1A73E8',
     iconText: 'GE',
-    iconUrl: '/icons/gemini.png',
+    iconUrl: './icons/gemini.png',
   },
   {
     providerId: 'moonshot',
@@ -104,7 +104,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     extraHeaders: {},
     iconBg: '#0F0F0F',
     iconText: 'MS',
-    iconUrl: '/icons/moonshot.webp',
+    iconUrl: './icons/moonshot.webp',
   },
   {
     providerId: 'qwen',
@@ -125,7 +125,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
     extraHeaders: {},
     iconBg: '#615CED',
     iconText: 'QW',
-    iconUrl: '/icons/qwen.png',
+    iconUrl: './icons/qwen.png',
   },
   {
     providerId: 'ollama',
