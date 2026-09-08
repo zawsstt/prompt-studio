@@ -123,7 +123,23 @@ body {
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.18);
+  background: rgba(99, 102, 241, 0.28) !important;
+  color: #1e1b4b !important;
+}
+
+::-moz-selection {
+  background: rgba(99, 102, 241, 0.28) !important;
+  color: #1e1b4b !important;
+}
+
+.chat-message .msg-bubble *::selection {
+  background: rgba(99, 102, 241, 0.35) !important;
+  color: #0f172a !important;
+}
+
+.chat-message.user .msg-bubble *::selection {
+  background: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
 }
 
 button {
@@ -829,6 +845,32 @@ body.sb-open::after {
   white-space: nowrap;
 }
 
+/* 确保按钮内的 svg 图标与文字在任何状态下强制可见 */
+.btn svg,
+.btn-success svg,
+.btn-danger svg,
+.btn-primary svg {
+  display: inline-block;
+  flex: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.btn-success,
+.btn.btn-success {
+  color: #fff !important;
+  background: #16A34A !important;
+  border-color: #16A34A !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3) !important;
+}
+
+.btn-success:hover,
+.btn.btn-success:hover {
+  background: #15803D !important;
+  border-color: #15803D !important;
+  color: #fff !important;
+}
+
 .btn:hover {
   border-color: #c7c7cc;
   background: #f6f6f8;
@@ -862,17 +904,18 @@ body.sb-open::after {
 }
 
 .btn-success {
-  color: #fff;
-  background: var(--success);
-  border-color: var(--success);
+  color: #fff !important;
+  background: var(--success) !important;
+  border-color: var(--success) !important;
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25);
 }
 
 .btn-success:hover {
-  background: #15803D;
-  border-color: #15803D;
+  background: #15803D !important;
+  border-color: #15803D !important;
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+  color: #fff !important;
 }
 
 .btn-danger {
@@ -939,13 +982,13 @@ body.sb-open::after {
 /* ═══════════════ Editor / Edit view ═══════════════ */
 .editor-view {
   height: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
-  gap: 16px;
+  display: flex;
+  gap: 0;
   padding: 14px 18px 16px;
   max-width: 1600px;
   margin: 0 auto;
   overflow: hidden;
+  position: relative;
 }
 
 .code-pane {
@@ -956,8 +999,37 @@ body.sb-open::after {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  min-width: 0;
+  flex: 1;
+  min-width: 320px;
   min-height: 0;
+}
+
+/* 拖拽分割条 */
+.panel-resize-handle {
+  width: 14px;
+  flex: none;
+  cursor: col-resize;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  z-index: 10;
+}
+
+.panel-resize-line {
+  width: 2px;
+  height: 36px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.panel-resize-handle:hover .panel-resize-line,
+.panel-resize-handle.active .panel-resize-line {
+  height: 64px;
+  background: var(--brand);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
 }
 
 .pane-head {
@@ -1241,7 +1313,9 @@ body.sb-open::after {
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  min-width: 0;
+  flex: none;
+  min-width: 280px;
+  max-width: calc(100% - 340px);
   min-height: 0;
 }
 
@@ -1435,6 +1509,23 @@ body.sb-open::after {
   padding: 11px 14px;
   border-radius: 15px;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.msg-bubble pre {
+  background: var(--bg-dark);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  max-width: 100%;
+}
+
+.msg-bubble pre code {
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .chat-message.user .msg-bubble {
@@ -1478,6 +1569,63 @@ body.sb-open::after {
   padding: 10px 12px;
   overflow-x: auto;
   margin: 8px 0;
+}
+
+/* 增强的代码块容器与复制按钮样式 */
+.codeblock-container {
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.codeblock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.codeblock-lang {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.codeblock-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.codeblock-copy-btn:hover {
+  background: #f8fafc;
+  color: var(--brand);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.codeblock-copy-btn.copied {
+  background: rgba(22, 163, 74, 0.08);
+  color: var(--success);
+  border-color: rgba(22, 163, 74, 0.3);
+}
+
+.codeblock-copy-btn .copy-icon {
+  flex: none;
 }
 
 .msg-bubble pre code {
@@ -1612,16 +1760,16 @@ body.sb-open::after {
   resize: none;
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  min-height: 52px;
+  min-height: 38px;
   height: auto;
-  max-height: 220px;
+  max-height: 200px;
   color: var(--text-primary);
   background: #fff;
-  line-height: 1.55;
+  line-height: 1.5;
   transition: border-color 0.2s, box-shadow 0.2s;
   overflow-y: auto;
   overflow-wrap: break-word;
@@ -1649,6 +1797,27 @@ body.sb-open::after {
   gap: 6px;
   flex: none;
   align-items: center;
+}
+
+.input-actions .btn {
+  height: 38px;
+  padding: 0 14px;
+}
+
+.voice-mic-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card, #fff);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
 }
 
 .input-actions .send-btn {
@@ -2678,19 +2847,28 @@ body.sb-open::after {
 
 .version-node {
   position: absolute;
-  left: 4px;
-  top: 24px;
-  width: 14px;
-  height: 14px;
+  left: 0px;
+  top: 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid var(--brand);
-  z-index: 1;
+  border: 2px solid var(--brand);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+  font-family: var(--font-mono);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .version-node.current {
   background: var(--brand);
-  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
 }
 
 .version-content {
@@ -4252,13 +4430,6 @@ body.sb-open::after {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* ═══════════════════════════════════════════════════════════════════
    T06 · Apple 级 UI/UX 打磨层（独立品牌设计迭代）
    ──────────────────────────────────────────────────────────────────
@@ -4480,10 +4651,16 @@ button:active:not(:disabled) {
 }
 
 .btn-success {
+  background: var(--success) !important;
+  border-color: var(--success) !important;
+  color: #fff !important;
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .btn-success:hover {
+  background: #15803D !important;
+  border-color: #15803D !important;
+  color: #fff !important;
   transform: none;
   filter: brightness(1.05);
   box-shadow: 0 8px 22px rgba(22, 163, 74, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -5044,9 +5221,9 @@ button:active:not(:disabled) {
 
 .voice-mic-btn {
   position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   border: 1px solid var(--border);
   background: var(--bg-card, #fff);
   color: var(--text-secondary);
@@ -5118,45 +5295,41 @@ button:active:not(:disabled) {
   backdrop-filter: blur(20px);
 }
 
-/* 语音激活时的边框脉冲泛光特效 - 参考小布/小爱同学设计 */
+/* 语音激活时的边框脉冲泛光特效 - 参考小布/小爱同学全屏边框发光设计 */
 body.voice-active::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 99999;
   pointer-events: none;
-  border-radius: 12px;
-  background:
-    linear-gradient(135deg, transparent, transparent) padding-box,
-    linear-gradient(135deg,
-      rgba(99, 102, 241, 0.6),
-      rgba(139, 92, 246, 0.5),
-      rgba(59, 130, 246, 0.6)) border-box;
-  border: 3px solid transparent;
+  box-sizing: border-box;
+  border: 4px solid transparent;
+  border-image: linear-gradient(135deg, #6366F1, #8B5CF6, #38BDF8, #6366F1) 1;
   animation: voice-glow-wave 2s ease-in-out infinite;
   box-shadow:
-    inset 0 0 40px rgba(99, 102, 241, 0.15),
-    0 0 60px rgba(99, 102, 241, 0.25),
-    0 0 100px rgba(139, 92, 246, 0.2);
+    inset 0 0 50px rgba(99, 102, 241, 0.45),
+    inset 0 0 100px rgba(139, 92, 246, 0.25),
+    0 0 60px rgba(99, 102, 241, 0.6),
+    0 0 120px rgba(139, 92, 246, 0.4);
 }
 
 /* 优雅的波浪脉冲动画 */
 @keyframes voice-glow-wave {
   0%, 100% {
-    opacity: 0.5;
-    transform: scale(1);
+    opacity: 0.6;
     box-shadow:
-      inset 0 0 40px rgba(99, 102, 241, 0.15),
-      0 0 60px rgba(99, 102, 241, 0.25),
-      0 0 100px rgba(139, 92, 246, 0.2);
+      inset 0 0 40px rgba(99, 102, 241, 0.35),
+      inset 0 0 80px rgba(139, 92, 246, 0.2),
+      0 0 50px rgba(99, 102, 241, 0.5),
+      0 0 100px rgba(139, 92, 246, 0.3);
   }
   50% {
-    opacity: 0.8;
-    transform: scale(0.998);
+    opacity: 1;
     box-shadow:
-      inset 0 0 60px rgba(99, 102, 241, 0.25),
-      0 0 80px rgba(99, 102, 241, 0.35),
-      0 0 120px rgba(139, 92, 246, 0.3);
+      inset 0 0 70px rgba(99, 102, 241, 0.65),
+      inset 0 0 120px rgba(139, 92, 246, 0.4),
+      0 0 80px rgba(99, 102, 241, 0.8),
+      0 0 140px rgba(139, 92, 246, 0.5);
   }
 }
 
@@ -5437,18 +5610,129 @@ body.voice-active::before {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
-/* AI 正在思考时的动画状态样式 */
+/* AI 正在思考时的动画状态样式（纯 CSS + React 高性能思考光波组件 - 紧凑精致微调版） */
 .assistant-thinking-state {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px;
-  color: var(--text-secondary);
-  font-size: 12px;
+  padding: 4px 10px;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  min-height: 24px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.16);
+  border-radius: 980px;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.05);
+}
+
+/* 思考声波与微光球复合组件（缩减约一半尺寸，精致优雅） */
+.thinking-orb-pulse {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thinking-orb-core {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 6px #6366f1;
+  animation: orb-core-pulse 1.4s ease-in-out infinite !important;
+}
+
+.thinking-orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed #818cf8;
+  animation: orb-ring-spin 3s linear infinite !important;
+}
+
+.thinking-orb-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.25);
+  animation: orb-glow-pulse 1.6s ease-in-out infinite alternate !important;
+}
+
+/* 思考声波跳动波形（精致细柱） */
+.thinking-bars-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 12px;
+  padding: 0 1px;
+}
+
+.thinking-bars-wave span {
+  width: 2.5px;
+  height: 100%;
+  background: linear-gradient(180deg, #818cf8, #6366f1);
+  border-radius: 2px;
+  animation: thinking-bar-bounce 1s ease-in-out infinite !important;
+  transform-origin: center;
+}
+
+.thinking-bars-wave span:nth-child(1) { animation-delay: 0s !important; }
+.thinking-bars-wave span:nth-child(2) { animation-delay: 0.18s !important; }
+.thinking-bars-wave span:nth-child(3) { animation-delay: 0.36s !important; }
+.thinking-bars-wave span:nth-child(4) { animation-delay: 0.54s !important; }
+
+@keyframes thinking-bar-bounce {
+  0%, 100% { transform: scaleY(0.3); opacity: 0.6; }
+  50% { transform: scaleY(1.1); opacity: 1; }
+}
+
+@keyframes orb-core-pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes orb-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orb-glow-pulse {
+  0% { transform: scale(0.8); opacity: 0.3; }
+  100% { transform: scale(1.4); opacity: 0.8; }
 }
 
 .thinking-hint {
   font-size: 11.5px;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: var(--brand-dark);
   letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thinking-dots-anim {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 1px;
+}
+
+.thinking-dots-anim span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--brand);
+  animation: thinking-bounce 1.2s infinite ease-in-out !important;
+}
+
+.thinking-dots-anim span:nth-child(1) { animation-delay: 0s !important; }
+.thinking-dots-anim span:nth-child(2) { animation-delay: 0.2s !important; }
+.thinking-dots-anim span:nth-child(3) { animation-delay: 0.4s !important; }
+
+@keyframes thinking-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+  40% { transform: scale(1.2); opacity: 1; }
 }

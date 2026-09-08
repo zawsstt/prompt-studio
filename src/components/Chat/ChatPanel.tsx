@@ -1,14 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { PROVIDER_TEMPLATES, getTemplate } from '../../data/providers';
-import { Send, Square, ChevronDown, Check, Brain, FileText, Zap, X, Quote, Eye, RotateCcw, User, Bot, Sparkles } from 'lucide-react';
+import { Send, Square, ChevronDown, Check, Brain, FileText, Zap, X, Quote, Eye, RotateCcw, User, Bot, Sparkles, Copy } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { BorderBeam } from 'border-beam';
 import MarkdownView from '../shared/MarkdownView';
 import VoiceInput from './VoiceInput';
+import { toast } from '../shared/Toast';
 import type { PendingReference } from '../../types';
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  width?: number;
+}
+
+export default function ChatPanel({ width }: ChatPanelProps) {
   const messages = useStore(s => s.chatMessages);
   const isStreaming = useStore(s => s.isStreaming);
   const sendChatMessage = useStore(s => s.sendChatMessage);
@@ -76,8 +81,8 @@ export default function ChatPanel() {
     const value = e.target.value;
     setInput(value);
     const el = e.target;
-    el.style.height = '52px';
-    el.style.height = Math.min(Math.max(el.scrollHeight, 52), 220) + 'px';
+    el.style.height = '38px';
+    el.style.height = Math.min(Math.max(el.scrollHeight, 38), 200) + 'px';
 
     // P1-11: debounced workspace reference detection (300ms)
     if (detectTimer.current) clearTimeout(detectTimer.current);
@@ -93,7 +98,10 @@ export default function ChatPanel() {
   const previewRef = previewRefId ? visibleRefs.find(r => r.id === previewRefId) : undefined;
 
   return (
-    <aside className={`chat-panel ${useStore(s => s.activeView) === 'history' ? 'collapsed' : ''}`}>
+    <aside
+      className={`chat-panel ${useStore(s => s.activeView) === 'history' ? 'collapsed' : ''}`}
+      style={width ? { width: `${width}px` } : undefined}
+    >
       <div className="chat-header">
         <span className="chat-title">AI 对话</span>
         <div style={{ position: 'relative' }}>
@@ -196,8 +204,20 @@ export default function ChatPanel() {
                       <MarkdownView content={msg.content} />
                     ) : isStreaming && msg.role === 'assistant' ? (
                       <div className="assistant-thinking-state">
-                        <ThinkingOrb state="working" size={20} />
-                        <span className="thinking-hint">AI 正在深入思考中…</span>
+                        <div className="thinking-orb-pulse">
+                          <span className="thinking-orb-glow" />
+                          <span className="thinking-orb-ring" />
+                          <span className="thinking-orb-core" />
+                        </div>
+                        <div className="thinking-bars-wave">
+                          <span /><span /><span /><span />
+                        </div>
+                        <span className="thinking-hint">
+                          AI 正在深入思考中
+                          <span className="thinking-dots-anim">
+                            <span /><span /><span />
+                          </span>
+                        </span>
                       </div>
                     ) : null}
                   </div>
@@ -221,6 +241,16 @@ export default function ChatPanel() {
                     ) : (
                       <><Sparkles size={12} /> 应用为候选修改</>
                     )}
+                  </button>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(msg.content);
+                      toast('已复制回复内容', 'success');
+                    }}
+                    title="复制整段 AI 回复"
+                  >
+                    <Copy size={12} /> 复制回复
                   </button>
                 </div>
               )}
@@ -332,8 +362,8 @@ export default function ChatPanel() {
               onTranscriptChange={(val) => {
                 setInput(val);
                 if (textareaRef.current) {
-                  textareaRef.current.style.height = '52px';
-                  textareaRef.current.style.height = Math.min(Math.max(textareaRef.current.scrollHeight, 52), 220) + 'px';
+                  textareaRef.current.style.height = '38px';
+                  textareaRef.current.style.height = Math.min(Math.max(textareaRef.current.scrollHeight, 38), 200) + 'px';
                 }
               }}
               onSendDirectly={(val) => {
@@ -345,7 +375,7 @@ export default function ChatPanel() {
                 setInput('');
                 clearChatReference();
                 if (textareaRef.current) {
-                  textareaRef.current.style.height = '52px';
+                  textareaRef.current.style.height = '38px';
                 }
               }}
             />

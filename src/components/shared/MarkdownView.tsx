@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Copy } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
+import { toast } from './Toast';
 
 /**
  * Shared Markdown renderer (P1-10: extracted from ChatPanel so the version
@@ -14,12 +16,19 @@ export interface MarkdownViewProps {
 }
 
 export default function MarkdownView({ content, onCopy }: MarkdownViewProps) {
-  const handleCopy = (text: string) => {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (text: string, id: string) => {
     if (onCopy) {
       onCopy(text);
     } else {
       navigator.clipboard.writeText(text);
     }
+    setCopiedId(id);
+    toast('已复制到剪贴板', 'success');
+    setTimeout(() => {
+      setCopiedId(prev => (prev === id ? null : prev));
+    }, 2000);
   };
 
   return (
@@ -32,15 +41,26 @@ export default function MarkdownView({ content, onCopy }: MarkdownViewProps) {
           if (!lang) {
             return <code {...props}>{children}</code>;
           }
+          const blockId = String(text.slice(0, 32));
+          const isCopied = copiedId === blockId;
+
           return (
-            <div>
+            <div className="codeblock-container">
               <div className="codeblock-header">
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{lang}</span>
-                <button className="codeblock-copy" onClick={() => handleCopy(text)}>
-                  <Copy size={10} /> 复制
+                <span className="codeblock-lang">{lang}</span>
+                <button
+                  className={`codeblock-copy-btn ${isCopied ? 'copied' : ''}`}
+                  onClick={() => handleCopy(text, blockId)}
+                  title="复制代码内容"
+                >
+                  {isCopied ? (
+                    <><Check size={11} className="copy-icon" /> 已复制</>
+                  ) : (
+                    <><Copy size={11} className="copy-icon" /> 复制代码</>
+                  )}
                 </button>
               </div>
-              <pre style={{ borderTop: 'none', borderRadius: '0 0 4px 4px' }}>
+              <pre style={{ borderTop: 'none', borderRadius: '0 0 8px 8px', margin: 0 }}>
                 <code className={className}>{children}</code>
               </pre>
             </div>

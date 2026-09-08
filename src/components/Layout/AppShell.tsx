@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../../store/useStore';
 import { RULESETS } from '../../data/rulesets';
 import NavColumn from './NavColumn';
@@ -27,6 +28,45 @@ export default function AppShell() {
   const scopeSyncIssues = useStore(s => s.scopeSyncIssues);
   const fileValidationIssues = useStore(s => s.fileValidationIssues);
   const showWelcome = useStore(s => s.showWelcome);
+
+  // 对话框宽度自由拖拽调整逻辑（默认 420px，极限边界 300px ~ 760px）
+  const [chatWidth, setChatWidth] = useState(420);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(420);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDraggingRef.current = true;
+    startXRef.current = e.clientX;
+    startWidthRef.current = chatWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      // 向左拖动增加宽度，向右拖动缩小宽度
+      const deltaX = startXRef.current - e.clientX;
+      const newWidth = Math.min(Math.max(startWidthRef.current + deltaX, 300), 760);
+      setChatWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [chatWidth]);
 
   const editingFile = editingFilePath ? importedFiles.find(f => f.path === editingFilePath) : null;
   const rulesetName =
@@ -100,7 +140,15 @@ export default function AppShell() {
                 {/* 首次打开不展示校验面板 */}
                 {!showWelcome && <ValidationPanel />}
               </div>
-              <ChatPanel />
+              {/* 左右拖拽自由调整宽度的分割手柄 */}
+              <div
+                className={`panel-resize-handle ${isDraggingRef.current ? 'active' : ''}`}
+                onMouseDown={handleMouseDown}
+                title="按住向左/向右拖拽调整对话框宽度"
+              >
+                <div className="panel-resize-line" />
+              </div>
+              <ChatPanel width={chatWidth} />
             </div>
           )}
           {/* Diff 视图只在内容区内展开（顶栏/侧边栏保持可见） */}
