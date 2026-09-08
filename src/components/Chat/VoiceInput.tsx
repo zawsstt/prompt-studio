@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, Send, X, Check } from 'lucide-react';
+import { Mic, Send, X, Check, Keyboard } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { BorderBeam } from 'border-beam';
 import { toast } from '../shared/Toast';
+import { useFullscreen } from '../../hooks/useFullscreen';
+import { useVoiceHotkey } from '../../hooks/useVoiceHotkey';
 
 interface VoiceInputProps {
   disabled?: boolean;
@@ -26,9 +28,13 @@ export default function VoiceInput({
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState('');
   const [finalAccumulated, setFinalAccumulated] = useState('');
+  const [showHotkeyHint, setShowHotkeyHint] = useState(false);
   const recognitionRef = useRef<any>(null);
   const isManuallyStopped = useRef(false);
   const liveTranscriptRef = useRef('');
+
+  // 全屏管理
+  const { requestFullscreen, exitFullscreen } = useFullscreen();
 
   const startListening = () => {
     const SpeechRecognitionClass = getSpeechRecognition();
@@ -53,6 +59,13 @@ export default function VoiceInput({
 
       // 添加整个网页边框泛光效果
       document.body.classList.add('voice-active');
+
+      // 尝试进入全屏模式以获得更好的泛光效果
+      if (hotkeyConfig.enableFullscreen) {
+        requestFullscreen().catch(() => {
+          // 全屏请求失败时静默处理，不影响语音功能
+        });
+      }
 
       rec.onstart = () => {
         setIsListening(true);
@@ -128,6 +141,11 @@ export default function VoiceInput({
     }
     setIsListening(false);
     document.body.classList.remove('voice-active');
+
+    // 退出全屏
+    if (hotkeyConfig.enableFullscreen) {
+      exitFullscreen().catch(() => {});
+    }
   };
 
   const toggleListening = () => {
@@ -137,6 +155,13 @@ export default function VoiceInput({
       startListening();
     }
   };
+
+  // 集成语音快捷键
+  const { config: hotkeyConfig, updateConfig: updateHotkeyConfig } = useVoiceHotkey(
+    startListening,
+    stopListening,
+    disabled
+  );
 
   // 确认并填入输入框
   const handleApplyToInput = () => {
@@ -196,13 +221,15 @@ export default function VoiceInput({
         type="button"
         className={`voice-mic-btn ${isListening ? 'active' : ''} ${!isSupported ? 'unsupported' : ''}`}
         onClick={toggleListening}
+        onMouseEnter={() => setShowHotkeyHint(true)}
+        onMouseLeave={() => setShowHotkeyHint(false)}
         disabled={disabled || !isSupported}
         title={
           !isSupported
             ? '当前浏览器不支持语音输入 API'
             : isListening
               ? '正在聆听...点击停止'
-              : '语音输入 (唤醒识别)'
+              : `语音输入 (快捷键: ${hotkeyConfig.key === 'KeyT' ? 'T' : hotkeyConfig.key})`
         }
       >
         {isListening ? (
@@ -272,6 +299,14 @@ export default function VoiceInput({
                 >
                   <Send size={12} /> 发送
                 </button>
+              </div>
+
+              {/* 快捷键提示 */}
+              <div className="voice-hotkey-hint">
+                <Keyboard size={11} />
+                <span>
+                  {hotkeyConfig.holdToTalk ? '按住' : '按下'} <kbd>{hotkeyConfig.key === 'KeyT' ? 'T' : hotkeyConfig.key.replace('Key', '')}</kbd> 键快速启动
+                </span>
               </div>
             </div>
           </BorderBeam>

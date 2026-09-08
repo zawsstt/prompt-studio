@@ -5091,10 +5091,11 @@ button:active:not(:disabled) {
 
 /* 优化后的语音浮窗：固定贴合在对话输入区上方，无全屏遮挡，兼顾操作与阅读上下文 */
 .voice-floating-bar {
-  position: absolute;
-  bottom: calc(100% + 12px);
-  right: 0;
-  left: 0;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 480px;
+  max-width: calc(100vw - 40px);
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -5116,31 +5117,57 @@ button:active:not(:disabled) {
   box-sizing: border-box;
 }
 
-/* 语音激活时整个网页边框泛光特效 */
+/* 语音激活时全屏泛光特效 - 覆盖整个屏幕 */
 body.voice-active::before {
   content: "";
   position: fixed;
-  inset: 0;
-  z-index: 999;
+  inset: -4px;
+  z-index: 9999;
   pointer-events: none;
-  border: 2px solid transparent;
+  border: 8px solid transparent;
   border-radius: 0;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.4)) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  background:
+    linear-gradient(135deg,
+      rgba(99, 102, 241, 0.95),
+      rgba(139, 92, 246, 0.95),
+      rgba(59, 130, 246, 0.95),
+      rgba(99, 102, 241, 0.95)) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: voice-glow-pulse 2s ease-in-out infinite;
-  box-shadow: inset 0 0 60px rgba(99, 102, 241, 0.3), 0 0 80px rgba(99, 102, 241, 0.4);
+  animation: voice-glow-pulse 1.5s ease-in-out infinite;
+  box-shadow:
+    inset 0 0 120px rgba(99, 102, 241, 0.8),
+    inset 0 0 80px rgba(139, 92, 246, 0.6),
+    0 0 160px rgba(99, 102, 241, 0.9),
+    0 0 120px rgba(139, 92, 246, 0.7),
+    0 0 80px rgba(59, 130, 246, 0.5);
+  filter: blur(1px);
 }
 
+/* 增强的全屏泛光脉冲动画 */
 @keyframes voice-glow-pulse {
   0%, 100% {
-    opacity: 0.6;
-    box-shadow: inset 0 0 60px rgba(99, 102, 241, 0.3), 0 0 80px rgba(99, 102, 241, 0.4);
+    opacity: 0.85;
+    border-width: 8px;
+    box-shadow:
+      inset 0 0 120px rgba(99, 102, 241, 0.8),
+      inset 0 0 80px rgba(139, 92, 246, 0.6),
+      0 0 160px rgba(99, 102, 241, 0.9),
+      0 0 120px rgba(139, 92, 246, 0.7),
+      0 0 80px rgba(59, 130, 246, 0.5);
   }
   50% {
     opacity: 1;
-    box-shadow: inset 0 0 80px rgba(99, 102, 241, 0.5), 0 0 120px rgba(99, 102, 241, 0.6);
+    border-width: 12px;
+    box-shadow:
+      inset 0 0 160px rgba(99, 102, 241, 1),
+      inset 0 0 100px rgba(139, 92, 246, 0.8),
+      0 0 200px rgba(99, 102, 241, 1),
+      0 0 160px rgba(139, 92, 246, 0.9),
+      0 0 120px rgba(59, 130, 246, 0.7);
   }
 }
 
@@ -5330,6 +5357,32 @@ body.voice-active::before {
 .voice-action-btn.primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #4f46e5, #4338ca);
   transform: translateY(-1px);
+}
+
+/* 快捷键提示 */
+.voice-hotkey-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+}
+
+.voice-hotkey-hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* AI 正在思考时的动画状态样式 */
