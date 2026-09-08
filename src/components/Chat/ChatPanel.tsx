@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { PROVIDER_TEMPLATES, getTemplate } from '../../data/providers';
 import { Send, Square, ChevronDown, Check, Brain, FileText, Zap, X, Quote, Eye, RotateCcw, User, Bot, Sparkles } from 'lucide-react';
+import { ThinkingOrb } from 'thinking-orbs';
 import MarkdownView from '../shared/MarkdownView';
 import VoiceInput from './VoiceInput';
 import type { PendingReference } from '../../types';
@@ -74,8 +75,8 @@ export default function ChatPanel() {
     const value = e.target.value;
     setInput(value);
     const el = e.target;
-    el.style.height = '40px';
-    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+    el.style.height = '52px';
+    el.style.height = Math.min(Math.max(el.scrollHeight, 52), 220) + 'px';
 
     // P1-11: debounced workspace reference detection (300ms)
     if (detectTimer.current) clearTimeout(detectTimer.current);
@@ -191,7 +192,10 @@ export default function ChatPanel() {
                 {msg.content ? (
                   <MarkdownView content={msg.content} />
                 ) : isStreaming && msg.role === 'assistant' ? (
-                  <span className="typing-cursor" />
+                  <div className="assistant-thinking-state">
+                    <ThinkingOrb state="working" size={20} theme="light" />
+                    <span className="thinking-hint">AI 正在深入思考中…</span>
+                  </div>
                 ) : null}
               </div>
               {msg.role === 'assistant' && msg.content && !msg.content.startsWith('❌') && (
@@ -317,8 +321,8 @@ export default function ChatPanel() {
               onTranscriptChange={(val) => {
                 setInput(val);
                 if (textareaRef.current) {
-                  textareaRef.current.style.height = 'auto';
-                  textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+                  textareaRef.current.style.height = '52px';
+                  textareaRef.current.style.height = Math.min(Math.max(textareaRef.current.scrollHeight, 52), 220) + 'px';
                 }
               }}
               onSendDirectly={(val) => {
@@ -330,7 +334,7 @@ export default function ChatPanel() {
                 setInput('');
                 clearChatReference();
                 if (textareaRef.current) {
-                  textareaRef.current.style.height = 'auto';
+                  textareaRef.current.style.height = '52px';
                 }
               }}
             />

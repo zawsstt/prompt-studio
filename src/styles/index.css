@@ -940,10 +940,10 @@ body.sb-open::after {
 .editor-view {
   height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
-  gap: 18px;
-  padding: 18px;
-  max-width: 1460px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+  gap: 16px;
+  padding: 14px 18px 16px;
+  max-width: 1600px;
   margin: 0 auto;
   overflow: hidden;
 }
@@ -1553,10 +1553,13 @@ body.sb-open::after {
 
 /* Chat input */
 .chat-input-area {
+  position: relative;
   flex: none;
   border-top: 1px solid var(--border);
-  background: #fff;
-  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  padding: 10px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1565,10 +1568,10 @@ body.sb-open::after {
 .context-bar {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 11.5px;
+  gap: 8px;
+  font-size: 11px;
   color: var(--text-muted);
-  padding: 6px 13px;
+  padding: 4px 10px;
   background: var(--bg-dark);
   border: 1px solid var(--border);
   border-radius: 980px;
@@ -1600,7 +1603,7 @@ body.sb-open::after {
 
 .chat-input-row {
   display: flex;
-  gap: 9px;
+  gap: 8px;
   align-items: flex-end;
 }
 
@@ -1608,21 +1611,22 @@ body.sb-open::after {
   flex: 1;
   resize: none;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  padding: 9px 12px;
-  font-size: 12.5px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
   font-family: inherit;
   outline: none;
-  height: 40px;
-  max-height: 110px;
+  min-height: 52px;
+  height: 52px;
+  max-height: 220px;
   color: var(--text-primary);
   background: #fff;
-  line-height: 1.5;
+  line-height: 1.55;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .chat-input-row textarea:focus {
-  border-color: rgba(99, 102, 241, 0.5);
+  border-color: rgba(99, 102, 241, 0.6);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
@@ -1634,6 +1638,7 @@ body.sb-open::after {
   display: flex;
   gap: 6px;
   flex: none;
+  align-items: center;
 }
 
 .input-actions .send-btn {
@@ -5029,9 +5034,9 @@ button:active:not(:disabled) {
 
 .voice-mic-btn {
   position: relative;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-card, #fff);
   color: var(--text-secondary);
@@ -5074,44 +5079,36 @@ button:active:not(:disabled) {
   100% { transform: scale(1.35); opacity: 0; }
 }
 
-/* 灵动岛呼吸与声波弹窗浮层 */
-.voice-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
+/* 优化后的语音浮窗：固定贴合在对话输入区上方，无全屏遮挡，兼顾操作与阅读上下文 */
+.voice-floating-bar {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  left: 0;
+  z-index: 1000;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 50px;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  animation: voice-fadein 0.2s ease-out;
-}
-
-@keyframes voice-fadein {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  flex-direction: column;
+  animation: voice-dock-drop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .voice-dock-pill {
   position: relative;
-  width: min(520px, 92vw);
-  border-radius: 20px;
-  padding: 16px 18px;
+  width: 100%;
+  border-radius: 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: linear-gradient(165deg, rgba(26, 28, 38, 0.96), rgba(14, 15, 22, 0.98));
-  border: 1px solid rgba(125, 200, 255, 0.2);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(99, 102, 241, 0.25);
+  gap: 10px;
+  background: linear-gradient(165deg, rgba(24, 26, 36, 0.98), rgba(12, 13, 20, 0.99));
+  border: 1px solid rgba(125, 200, 255, 0.22);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), 0 0 20px rgba(99, 102, 241, 0.2);
   color: #fff;
-  animation: voice-dock-drop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
 }
 
 @keyframes voice-dock-drop {
   from {
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(12px) scale(0.97);
     opacity: 0;
   }
   to {
@@ -5123,41 +5120,21 @@ button:active:not(:disabled) {
 .voice-pill-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .voice-orb-indicator {
   position: relative;
-  width: 20px;
-  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
 }
 
-.voice-orb-glow {
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.8), transparent 70%);
-  animation: voice-orb-pulse 1.8s ease-in-out infinite;
-}
-
-.voice-orb-core {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #c7d2fe, #6366f1 55%, #3730a3 100%);
-  box-shadow: 0 0 8px rgba(99, 102, 241, 0.8);
-}
-
-@keyframes voice-orb-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.35); opacity: 1; }
-}
-
 .voice-state-tag {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -5173,12 +5150,12 @@ button:active:not(:disabled) {
 
 .voice-btn-close {
   margin-left: auto;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5188,34 +5165,35 @@ button:active:not(:disabled) {
 }
 
 .voice-btn-close:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
 /* 7 柱律动波形 (来自 DSH eisland 原型) */
 .eisland-bars-row {
-  display: flex;
+  display: inline-flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 5px;
-  height: 26px;
-  padding: 2px 0;
+  gap: 4px;
+  height: 18px;
+  padding: 0 4px;
+  margin-left: 4px;
 }
 
 .eisland-bars-row i {
-  width: 4px;
-  border-radius: 3px;
+  width: 3px;
+  border-radius: 2px;
   background: linear-gradient(180deg, #93c5fd, #6366f1);
   animation: eisland-bar-anim 1s ease-in-out infinite;
 }
 
-.eisland-bars-row i:nth-child(1) { height: 8px; animation-delay: 0s; }
-.eisland-bars-row i:nth-child(2) { height: 16px; animation-delay: 0.14s; }
-.eisland-bars-row i:nth-child(3) { height: 24px; animation-delay: 0.28s; }
-.eisland-bars-row i:nth-child(4) { height: 14px; animation-delay: 0.42s; }
-.eisland-bars-row i:nth-child(5) { height: 22px; animation-delay: 0.56s; }
-.eisland-bars-row i:nth-child(6) { height: 12px; animation-delay: 0.7s; }
-.eisland-bars-row i:nth-child(7) { height: 18px; animation-delay: 0.84s; }
+.eisland-bars-row i:nth-child(1) { height: 6px; animation-delay: 0s; }
+.eisland-bars-row i:nth-child(2) { height: 12px; animation-delay: 0.14s; }
+.eisland-bars-row i:nth-child(3) { height: 18px; animation-delay: 0.28s; }
+.eisland-bars-row i:nth-child(4) { height: 10px; animation-delay: 0.42s; }
+.eisland-bars-row i:nth-child(5) { height: 16px; animation-delay: 0.56s; }
+.eisland-bars-row i:nth-child(6) { height: 8px; animation-delay: 0.7s; }
+.eisland-bars-row i:nth-child(7) { height: 14px; animation-delay: 0.84s; }
 
 @keyframes eisland-bar-anim {
   0%, 100% { transform: scaleY(0.4); }
@@ -5224,33 +5202,33 @@ button:active:not(:disabled) {
 
 /* 实时文本展示框 */
 .voice-transcript-box {
-  min-height: 72px;
-  max-height: 140px;
+  min-height: 52px;
+  max-height: 110px;
   overflow-y: auto;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 10px 14px;
+  padding: 8px 12px;
 }
 
 .voice-transcript-text {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.55;
   color: rgba(255, 255, 255, 0.95);
   word-break: break-word;
 }
 
 .voice-interim {
   color: #93c5fd;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .voice-placeholder {
   margin: 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  line-height: 1.6;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.55;
 }
 
 /* 操作按钮 */
@@ -5258,17 +5236,17 @@ button:active:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .voice-action-btn {
   border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 12px;
+  padding: 4px 12px;
+  font-size: 11.5px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.18s;
   border: 1px solid transparent;
@@ -5310,4 +5288,20 @@ button:active:not(:disabled) {
 .voice-action-btn.primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #4f46e5, #4338ca);
   transform: translateY(-1px);
+}
+
+/* AI 正在思考时的动画状态样式 */
+.assistant-thinking-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.thinking-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  letter-spacing: -0.01em;
 }

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Send, X, Check } from 'lucide-react';
+import { Mic, Send, X, Check } from 'lucide-react';
+import { ThinkingOrb } from 'thinking-orbs';
+import { BorderBeam } from 'border-beam';
 import { toast } from '../shared/Toast';
 
 interface VoiceInputProps {
@@ -67,10 +69,7 @@ export default function VoiceInput({
         }
 
         if (finalized) {
-          setFinalAccumulated(prev => {
-            const next = prev ? `${prev} ${finalized}` : finalized;
-            return next;
-          });
+          setFinalAccumulated(prev => (prev ? `${prev} ${finalized}` : finalized));
         }
         setInterimText(interim);
       };
@@ -90,7 +89,6 @@ export default function VoiceInput({
 
       rec.onend = () => {
         if (!isManuallyStopped.current && isListening) {
-          // 如果非手动停止且希望持续，可按需平滑退出或重启
           setIsListening(false);
         } else {
           setIsListening(false);
@@ -197,67 +195,66 @@ export default function VoiceInput({
         )}
       </button>
 
-      {/* 录音唤醒与识别特效悬浮面板 */}
+      {/* 优化后的语音浮窗：固定贴合在对话输入区上方，并加上 BorderBeam 高光环绕与 ThinkingOrb 波动 */}
       {isListening && (
-        <div className="voice-modal-overlay">
-          <div className="voice-dock-pill">
-            <div className="voice-pill-header">
-              <div className="voice-orb-indicator">
-                <div className="voice-orb-glow" />
-                <div className="voice-orb-core" />
+        <div className="voice-floating-bar">
+          <BorderBeam size="md" colorVariant="ocean" strength={0.85} theme="dark">
+            <div className="voice-dock-pill">
+              <div className="voice-pill-header">
+                <div className="voice-orb-indicator">
+                  <ThinkingOrb state="listening" size={20} theme="dark" />
+                </div>
+                <span className="voice-state-tag">
+                  <span className="voice-dot-live" /> 语音识别中...
+                </span>
+                <div className="eisland-bars-row">
+                  <i /><i /><i /><i /><i /><i /><i />
+                </div>
+                <button type="button" className="voice-btn-close" onClick={handleCancel} title="关闭语音">
+                  <X size={12} />
+                </button>
               </div>
-              <span className="voice-state-tag">
-                <span className="voice-dot-live" /> 正在聆听中...
-              </span>
-              <button className="voice-btn-close" onClick={handleCancel} title="取消录音">
-                <X size={12} />
-              </button>
-            </div>
 
-            {/* DSH 风格 7 柱跳动音频律动波形 */}
-            <div className="eisland-bars-row">
-              <i /><i /><i /><i /><i /><i /><i />
-            </div>
+              {/* 实时转写结果展示 */}
+              <div className="voice-transcript-box">
+                {fullLiveText ? (
+                  <p className="voice-transcript-text">
+                    {finalAccumulated}
+                    {interimText && <span className="voice-interim">{interimText}</span>}
+                  </p>
+                ) : (
+                  <p className="voice-placeholder">正在聆听中，请说话…</p>
+                )}
+              </div>
 
-            {/* 实时转写结果展示 */}
-            <div className="voice-transcript-box">
-              {fullLiveText ? (
-                <p className="voice-transcript-text">
-                  {finalAccumulated}
-                  {interimText && <span className="voice-interim">{interimText}</span>}
-                </p>
-              ) : (
-                <p className="voice-placeholder">请说话，支持中文/普通话实时识别转文字…</p>
-              )}
+              {/* 底部操作条 */}
+              <div className="voice-actions-bar">
+                <button
+                  type="button"
+                  className="voice-action-btn ghost"
+                  onClick={handleCancel}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="voice-action-btn secondary"
+                  onClick={handleApplyToInput}
+                  disabled={!fullLiveText}
+                >
+                  <Check size={12} /> 填入框
+                </button>
+                <button
+                  type="button"
+                  className="voice-action-btn primary"
+                  onClick={handleSendNow}
+                  disabled={!fullLiveText}
+                >
+                  <Send size={12} /> 发送
+                </button>
+              </div>
             </div>
-
-            {/* 操作条 */}
-            <div className="voice-actions-bar">
-              <button
-                type="button"
-                className="voice-action-btn ghost"
-                onClick={handleCancel}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                className="voice-action-btn secondary"
-                onClick={handleApplyToInput}
-                disabled={!fullLiveText}
-              >
-                <Check size={12} /> 填入输入框
-              </button>
-              <button
-                type="button"
-                className="voice-action-btn primary"
-                onClick={handleSendNow}
-                disabled={!fullLiveText}
-              >
-                <Send size={12} /> 直接发送
-              </button>
-            </div>
-          </div>
+          </BorderBeam>
         </div>
       )}
     </div>
