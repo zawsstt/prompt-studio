@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, Send, X, Check, Keyboard } from 'lucide-react';
+import { Mic, Send, X, Check, Keyboard, Zap, Shield } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { BorderBeam } from 'border-beam';
 import { toast } from '../shared/Toast';
 import { useFullscreen } from '../../hooks/useFullscreen';
-import { useVoiceHotkey } from '../../hooks/useVoiceHotkey';
+import { useVoiceHotkey, type VoiceInputMode } from '../../hooks/useVoiceHotkey';
 
 interface VoiceInputProps {
   disabled?: boolean;
@@ -118,6 +118,9 @@ export default function VoiceInput({
         if (isManuallyStopped.current) {
           setIsListening(false);
           document.body.classList.remove('voice-active');
+
+          // 根据模式自动处理识别结果
+          handleAutoProcess();
         }
       };
 
@@ -129,6 +132,33 @@ export default function VoiceInput({
       setIsListening(false);
       document.body.classList.remove('voice-active');
     }
+  };
+
+  // 自动处理识别结果（根据模式）
+  const handleAutoProcess = () => {
+    const rawResult = document.querySelector('.voice-transcript-text')?.textContent || '';
+    const speechResult = (rawResult || liveTranscriptRef.current || (finalAccumulated + (interimText ? ` ${interimText}` : ''))).trim();
+
+    if (!speechResult) return;
+
+    if (hotkeyConfig.inputMode === 'direct') {
+      // 直出模式：自动发送
+      if (onSendDirectly) {
+        onSendDirectly(speechResult);
+        toast('语音识别完成，已自动发送', 'success');
+      }
+    } else {
+      // 安全模式：填入输入框
+      if (onTranscriptChange) {
+        onTranscriptChange(speechResult);
+        toast('语音识别完成，已填入输入框', 'info');
+      }
+    }
+
+    // 清空状态
+    setInterimText('');
+    setFinalAccumulated('');
+    liveTranscriptRef.current = '';
   };
 
   const stopListening = () => {
@@ -257,8 +287,38 @@ export default function VoiceInput({
                 <div className="eisland-bars-row">
                   <i /><i /><i /><i /><i /><i /><i />
                 </div>
+                {/* 模式指示器 */}
+                <div
+                  className={`voice-mode-indicator ${hotkeyConfig.inputMode}`}
+                  title={hotkeyConfig.inputMode === 'direct' ? '直出模式：自动发送' : '安全模式：填入输入框'}
+                >
+                  {hotkeyConfig.inputMode === 'direct' ? (
+                    <><Zap size={11} /> 直出</>
+                  ) : (
+                    <><Shield size={11} /> 安全</>
+                  )}
+                </div>
                 <button type="button" className="voice-btn-close" onClick={handleCancel} title="关闭语音">
                   <X size={12} />
+                </button>
+              </div>
+
+              {/* 模式切换提示条 */}
+              <div className="voice-mode-switch-bar">
+                <span className="voice-mode-label">
+                  {hotkeyConfig.inputMode === 'direct'
+                    ? '🚀 直出模式：识别完成后自动发送'
+                    : '🛡️ 安全模式：识别完成后填入输入框'}
+                </span>
+                <button
+                  type="button"
+                  className="voice-mode-toggle-btn"
+                  onClick={() => updateHotkeyConfig({
+                    inputMode: hotkeyConfig.inputMode === 'direct' ? 'safe' : 'direct'
+                  })}
+                  title="切换输入模式"
+                >
+                  切换模式
                 </button>
               </div>
 

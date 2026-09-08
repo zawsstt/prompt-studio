@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
+ * 语音输入模式
+ */
+export type VoiceInputMode = 'direct' | 'safe';
+
+/**
  * 语音快捷键配置
  */
 export interface VoiceHotkeyConfig {
   key: string;
   holdToTalk: boolean; // true: 按住说话，false: 切换模式
   enableFullscreen: boolean; // 是否在激活时进入全屏
+  inputMode: VoiceInputMode; // 输入模式：direct=直出模式，safe=安全模式
 }
 
 /**
@@ -15,7 +21,8 @@ export interface VoiceHotkeyConfig {
 const DEFAULT_CONFIG: VoiceHotkeyConfig = {
   key: 'KeyT',
   holdToTalk: true,
-  enableFullscreen: true
+  enableFullscreen: true,
+  inputMode: 'safe' // 默认安全模式
 };
 
 /**
