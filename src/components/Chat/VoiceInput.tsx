@@ -51,8 +51,12 @@ export default function VoiceInput({
       liveTranscriptRef.current = '';
       setIsListening(true);
 
+      // 添加整个网页边框泛光效果
+      document.body.classList.add('voice-active');
+
       rec.onstart = () => {
         setIsListening(true);
+        document.body.classList.add('voice-active');
       };
 
       rec.onresult = (event: any) => {
@@ -100,6 +104,7 @@ export default function VoiceInput({
         // 允许持续或平滑自然结束
         if (isManuallyStopped.current) {
           setIsListening(false);
+          document.body.classList.remove('voice-active');
         }
       };
 
@@ -109,6 +114,7 @@ export default function VoiceInput({
       console.error('Failed to start speech recognition:', e);
       toast('启动语音识别失败', 'error');
       setIsListening(false);
+      document.body.classList.remove('voice-active');
     }
   };
 
@@ -121,6 +127,7 @@ export default function VoiceInput({
       recognitionRef.current = null;
     }
     setIsListening(false);
+    document.body.classList.remove('voice-active');
   };
 
   const toggleListening = () => {

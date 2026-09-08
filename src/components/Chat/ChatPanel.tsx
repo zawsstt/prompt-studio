@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore';
 import { PROVIDER_TEMPLATES, getTemplate } from '../../data/providers';
 import { Send, Square, ChevronDown, Check, Brain, FileText, Zap, X, Quote, Eye, RotateCcw, User, Bot, Sparkles } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
+import { BorderBeam } from 'border-beam';
 import MarkdownView from '../shared/MarkdownView';
 import VoiceInput from './VoiceInput';
 import type { PendingReference } from '../../types';
@@ -167,37 +168,47 @@ export default function ChatPanel() {
                   <span className="num">¥{msg.costEst.toFixed(4)}</span>
                 )}
               </div>
-              <div className="msg-bubble">
-                {msg.reasoning && showReasoning && (
-                  <div className="reasoning-block">
-                    <div className="reasoning-header" onClick={() =>
-                      setReasoningExpanded(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))
-                    }>
-                      <Brain size={12} /> Reasoning
-                      <ChevronDown size={10} style={{
-                        transform: reasoningExpanded[msg.id] ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 120ms'
-                      }} />
-                    </div>
-                    {reasoningExpanded[msg.id] && (
-                      <div className="reasoning-content">{msg.reasoning}</div>
-                    )}
-                    {!reasoningExpanded[msg.id] && msg.reasoning.length > 100 && (
-                      <div className="reasoning-content" style={{ maxHeight: '40px', overflow: 'hidden', opacity: 0.6 }}>
-                        {msg.reasoning.slice(0, 100)}...
+              {msg.role === 'assistant' ? (
+                <BorderBeam size="sm" colorVariant="colorful" strength={0.6} active={isStreaming && messages.indexOf(msg) === messages.length - 1}>
+                  <div className="msg-bubble">
+                    {msg.reasoning && showReasoning && (
+                      <div className="reasoning-block">
+                        <div className="reasoning-header" onClick={() =>
+                          setReasoningExpanded(prev => ({ ...prev, [msg.id]: !prev[msg.id] }))
+                        }>
+                          <Brain size={12} /> Reasoning
+                          <ChevronDown size={10} style={{
+                            transform: reasoningExpanded[msg.id] ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 120ms'
+                          }} />
+                        </div>
+                        {reasoningExpanded[msg.id] && (
+                          <div className="reasoning-content">{msg.reasoning}</div>
+                        )}
+                        {!reasoningExpanded[msg.id] && msg.reasoning.length > 100 && (
+                          <div className="reasoning-content" style={{ maxHeight: '40px', overflow: 'hidden', opacity: 0.6 }}>
+                            {msg.reasoning.slice(0, 100)}...
+                          </div>
+                        )}
                       </div>
                     )}
+                    {msg.content ? (
+                      <MarkdownView content={msg.content} />
+                    ) : isStreaming && msg.role === 'assistant' ? (
+                      <div className="assistant-thinking-state">
+                        <ThinkingOrb state="working" size={20} theme="light" />
+                        <span className="thinking-hint">AI 正在深入思考中…</span>
+                      </div>
+                    ) : null}
                   </div>
-                )}
-                {msg.content ? (
-                  <MarkdownView content={msg.content} />
-                ) : isStreaming && msg.role === 'assistant' ? (
-                  <div className="assistant-thinking-state">
-                    <ThinkingOrb state="working" size={20} theme="light" />
-                    <span className="thinking-hint">AI 正在深入思考中…</span>
-                  </div>
-                ) : null}
-              </div>
+                </BorderBeam>
+              ) : (
+                <div className="msg-bubble">
+                  {msg.content ? (
+                    <MarkdownView content={msg.content} />
+                  ) : null}
+                </div>
+              )}
               {msg.role === 'assistant' && msg.content && !msg.content.startsWith('❌') && (
                 <div className="msg-actions">
                   <button
