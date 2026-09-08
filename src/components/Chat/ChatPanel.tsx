@@ -196,7 +196,7 @@ export default function ChatPanel() {
                       <MarkdownView content={msg.content} />
                     ) : isStreaming && msg.role === 'assistant' ? (
                       <div className="assistant-thinking-state">
-                        <ThinkingOrb state="working" size={20} theme="light" />
+                        <ThinkingOrb state="working" size={20} />
                         <span className="thinking-hint">AI 正在深入思考中…</span>
                       </div>
                     ) : null}

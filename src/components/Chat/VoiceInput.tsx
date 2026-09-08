@@ -33,9 +33,6 @@ export default function VoiceInput({
   const isManuallyStopped = useRef(false);
   const liveTranscriptRef = useRef('');
 
-  // 全屏管理
-  const { requestFullscreen, exitFullscreen } = useFullscreen();
-
   const startListening = () => {
     const SpeechRecognitionClass = getSpeechRecognition();
     if (!SpeechRecognitionClass) {
@@ -57,15 +54,8 @@ export default function VoiceInput({
       liveTranscriptRef.current = '';
       setIsListening(true);
 
-      // 添加整个网页边框泛光效果
+      // 添加边框泛光效果（不进入全屏）
       document.body.classList.add('voice-active');
-
-      // 尝试进入全屏模式以获得更好的泛光效果
-      if (hotkeyConfig.enableFullscreen) {
-        requestFullscreen().catch(() => {
-          // 全屏请求失败时静默处理，不影响语音功能
-        });
-      }
 
       rec.onstart = () => {
         setIsListening(true);
@@ -171,11 +161,6 @@ export default function VoiceInput({
     }
     setIsListening(false);
     document.body.classList.remove('voice-active');
-
-    // 退出全屏
-    if (hotkeyConfig.enableFullscreen) {
-      exitFullscreen().catch(() => {});
-    }
   };
 
   const toggleListening = () => {
@@ -279,7 +264,7 @@ export default function VoiceInput({
             <div className="voice-dock-pill">
               <div className="voice-pill-header">
                 <div className="voice-orb-indicator">
-                  <ThinkingOrb state="listening" size={20} theme="dark" />
+                  <ThinkingOrb state="listening" size={20} />
                 </div>
                 <span className="voice-state-tag">
                   <span className="voice-dot-live" /> 语音识别中...
