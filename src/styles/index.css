@@ -1642,11 +1642,11 @@ body.sb-open::after {
 }
 
 .input-actions .send-btn {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   flex: none;
   border: none;
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--brand);
   color: #fff;
   display: grid;
@@ -5034,9 +5034,9 @@ button:active:not(:disabled) {
 
 .voice-mic-btn {
   position: relative;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg-card, #fff);
   color: var(--text-secondary);
