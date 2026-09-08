@@ -5016,3 +5016,298 @@ button:active:not(:disabled) {
     background: rgba(28, 28, 32, 0.97);
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   🎙️ DSH Eisland 风格：语音识别与唤醒动效组件
+   ═══════════════════════════════════════════════════ */
+
+.voice-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.voice-mic-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card, #fff);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+}
+
+.voice-mic-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: var(--brand);
+}
+
+.voice-mic-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.voice-mic-btn.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: var(--brand);
+}
+
+.mic-ripple-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(99, 102, 241, 0.5);
+  animation: voice-mic-ripple 1.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes voice-mic-ripple {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* 灵动岛呼吸与声波弹窗浮层 */
+.voice-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 50px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: voice-fadein 0.2s ease-out;
+}
+
+@keyframes voice-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.voice-dock-pill {
+  position: relative;
+  width: min(520px, 92vw);
+  border-radius: 20px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(165deg, rgba(26, 28, 38, 0.96), rgba(14, 15, 22, 0.98));
+  border: 1px solid rgba(125, 200, 255, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(99, 102, 241, 0.25);
+  color: #fff;
+  animation: voice-dock-drop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes voice-dock-drop {
+  from {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.voice-pill-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.voice-orb-indicator {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.voice-orb-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.8), transparent 70%);
+  animation: voice-orb-pulse 1.8s ease-in-out infinite;
+}
+
+.voice-orb-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #c7d2fe, #6366f1 55%, #3730a3 100%);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.8);
+}
+
+@keyframes voice-orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.35); opacity: 1; }
+}
+
+.voice-state-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.voice-dot-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.voice-btn-close {
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  padding: 0;
+}
+
+.voice-btn-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* 7 柱律动波形 (来自 DSH eisland 原型) */
+.eisland-bars-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 2px 0;
+}
+
+.eisland-bars-row i {
+  width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #93c5fd, #6366f1);
+  animation: eisland-bar-anim 1s ease-in-out infinite;
+}
+
+.eisland-bars-row i:nth-child(1) { height: 8px; animation-delay: 0s; }
+.eisland-bars-row i:nth-child(2) { height: 16px; animation-delay: 0.14s; }
+.eisland-bars-row i:nth-child(3) { height: 24px; animation-delay: 0.28s; }
+.eisland-bars-row i:nth-child(4) { height: 14px; animation-delay: 0.42s; }
+.eisland-bars-row i:nth-child(5) { height: 22px; animation-delay: 0.56s; }
+.eisland-bars-row i:nth-child(6) { height: 12px; animation-delay: 0.7s; }
+.eisland-bars-row i:nth-child(7) { height: 18px; animation-delay: 0.84s; }
+
+@keyframes eisland-bar-anim {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1.15); }
+}
+
+/* 实时文本展示框 */
+.voice-transcript-box {
+  min-height: 72px;
+  max-height: 140px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 14px;
+}
+
+.voice-transcript-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+  word-break: break-word;
+}
+
+.voice-interim {
+  color: #93c5fd;
+  opacity: 0.85;
+}
+
+.voice-placeholder {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.6;
+}
+
+/* 操作按钮 */
+.voice-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.voice-action-btn {
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+}
+
+.voice-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.voice-action-btn.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.voice-action-btn.ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.voice-action-btn.secondary {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+}
+
+.voice-action-btn.secondary:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.3);
+  color: #fff;
+}
+
+.voice-action-btn.primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.voice-action-btn.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  transform: translateY(-1px);
+}

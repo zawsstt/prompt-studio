@@ -3,6 +3,7 @@ import { useStore } from '../../store/useStore';
 import { PROVIDER_TEMPLATES, getTemplate } from '../../data/providers';
 import { Send, Square, ChevronDown, Check, Brain, FileText, Zap, X, Quote, Eye, RotateCcw, User, Bot, Sparkles } from 'lucide-react';
 import MarkdownView from '../shared/MarkdownView';
+import VoiceInput from './VoiceInput';
 import type { PendingReference } from '../../types';
 
 export default function ChatPanel() {
@@ -310,6 +311,29 @@ export default function ChatPanel() {
             disabled={isStreaming}
           />
           <div className="input-actions">
+            <VoiceInput
+              disabled={isStreaming}
+              currentInput={input}
+              onTranscriptChange={(val) => {
+                setInput(val);
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = 'auto';
+                  textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+                }
+              }}
+              onSendDirectly={(val) => {
+                if (!val.trim() || isStreaming) return;
+                const finalContent = chatReference
+                  ? `> 引用内容：\n> ${chatReference.text.split('\n').join('\n> ')}\n\n${val}`
+                  : val;
+                sendChatMessage(finalContent);
+                setInput('');
+                clearChatReference();
+                if (textareaRef.current) {
+                  textareaRef.current.style.height = 'auto';
+                }
+              }}
+            />
             {isStreaming ? (
               <button className="btn btn-danger btn-sm" onClick={stopStreaming}>
                 <Square size={12} /> 停止
