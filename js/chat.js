@@ -238,8 +238,8 @@ function generateRawAIResponse(userMsg) {
       {
         id: 'cb1',
         type: 'replace',
-        oldSnippet: '你是一个财经数据分析驾驶舱的主协调 agent。你的核心职责是…',
-        newSnippet: '你是财经数据分析驾驶舱的主协调 agent。核心职责：…',
+        oldSnippet: '你是一个任务协调 agent。你的核心职责是…',
+        newSnippet: '你是任务协调 agent。核心职责：…',
         why: '祈使句语气更直接，减少"你"字冗余，模型遵循率更高。关联规则：style/person-consistency',
         how: '将 Instructions 章节中的描述性语句改为强祈使句，去掉冗余代词，精简指令结构。',
         effect: '指令确定性增强，输出格式更稳定，预计歧义率降低 20%+。',
@@ -257,9 +257,9 @@ function generateRawAIResponse(userMsg) {
         id: 'cb3',
         type: 'add',
         oldSnippet: '(不存在)',
-        newSnippet: '### 示例 2：多指标对比…',
-        why: '覆盖更多使用场景（多指标对比），提升模型在复杂查询下的表现。',
-        how: '新增多指标对比示例，展示三个股票代码 + 两个指标的并行查询流程。',
+        newSnippet: '### 示例 2：多维度对比…',
+        why: '覆盖更多使用场景，提升模型在复杂查询下的表现。',
+        how: '丰富示例场景，展示三个实体 + 多个指标的并行查询流程。',
         effect: '丰富模型 Few-shot 学习样本，复杂查询准确率预计提升。',
       },
     ],
@@ -288,10 +288,10 @@ function generateModifiedContent(original) {
   // Simulated modification for demo purposes
   return original
     .replace(
-      '你是一个财经数据分析驾驶舱的主协调 agent。你的核心职责是接收用户的财经数据查询请求，将其分解为子任务，并协调各子 agent 完成数据采集、计算与可视化。',
-      '你是财经数据分析驾驶舱的主协调 agent。核心职责：接收用户财经数据查询请求，分解为子任务，协调各子 agent 完成数据采集、计算与可视化。'
+      '你是一个任务协调 agent。你的核心职责是接收用户的查询请求，将其分解为子任务，并协调各子 agent 完成任务执行。',
+      '你是任务协调 agent。核心职责：接收用户查询请求，分解为子任务，协调各子 agent 完成任务执行。'
     )
-    .replace('当用户提出查询时，请按以下步骤处理：', '**处理步骤（严格按顺序执行）**：')
+    .replace('当用户提出请求时，请按以下步骤处理：', '**处理步骤（严格按顺序执行）**：')
     .replace(
       '4. **汇总结果**：合并各子 agent 返回的数据，生成统一视图',
       '4. **汇总结果**：合并各子 agent 返回的数据，生成统一视图\n5. **校验输出**：检查 JSON 格式合规性与数据完整性'
@@ -299,8 +299,8 @@ function generateModifiedContent(original) {
     .replace('请始终以 JSON 格式输出分析结果，包含以下字段：', '**必须以 JSON 格式输出**，不得包含额外说明文字。JSON Schema 如下：')
     .replace('"results": "汇总结果"\n}', '"results": "汇总结果（结构化对象）",\n  "confidence": 0.0\n}')
     .replace(
-      '用户输入："帮我分析茅台和五粮液过去一个季度的毛利率趋势"\n→ 解析为两个股票代码、毛利率指标、过去一个季度时间范围 → 并行查询 → 汇总对比',
-      '### 示例 1：毛利率查询\n用户输入："帮我分析茅台和五粮液过去一个季度的毛利率趋势"\n→ 解析为两个股票代码、毛利率指标、过去一个季度时间范围\n→ 并行查询 → 汇总对比输出\n\n### 示例 2：多指标对比\n用户输入："对比格力、美的、海尔的净利率和ROE"\n→ 解析三个股票代码、两个指标\n→ 并行查询各公司数据 → 交叉对比 → 表格输出'
+      '用户输入："帮我分析过去一个季度的数据趋势"\n→ 解析时间范围和数据类型 → 并行查询 → 汇总对比',
+      '### 示例 1：趋势分析\n用户输入："帮我分析过去一个季度的数据趋势"\n→ 解析时间范围和数据类型\n→ 并行查询 → 汇总对比输出\n\n### 示例 2：多维度对比\n用户输入："对比产品A、B、C的核心指标"\n→ 解析三个产品、多个指标\n→ 并行查询各产品数据 → 交叉对比 → 表格输出'
     )
     .replace(
       '- 子 Agent 通信协议参见 SKILL.md 各子 agent 目录',
@@ -313,8 +313,8 @@ function generateChangeBlocks() {
     {
       id: 'cb1', type: 'replace',
       oldRange: 'L10-L12', newRange: 'L10-L14',
-      oldSnippet: '你是一个财经数据分析驾驶舱的主协调 agent。你的核心职责是…',
-      newSnippet: '你是财经数据分析驾驶舱的主协调 agent。核心职责：…',
+      oldSnippet: '你是一个任务协调 agent。你的核心职责是…',
+      newSnippet: '你是任务协调 agent。核心职责：…',
       why: '祈使句语气更直接，减少"你"字冗余，模型遵循率更高。关联规则：style/person-consistency',
       how: '将 Instructions 章节中的描述性语句改为强祈使句，去掉冗余代词，精简指令结构。',
       effect: '指令确定性增强，输出格式更稳定，预计歧义率降低 20%+。',
@@ -335,8 +335,8 @@ function generateChangeBlocks() {
       oldRange: '—', newRange: 'L25-L28',
       oldSnippet: '(不存在)',
       newSnippet: '### 示例 2：多指标对比…',
-      why: '覆盖更多使用场景（多指标对比），提升模型在复杂查询下的表现。',
-      how: '新增多指标对比示例，展示三个股票代码 + 两个指标的并行查询流程。',
+      why: '覆盖更多使用场景，提升模型在复杂查询下的表现。',
+      how: '丰富示例场景，展示三个实体 + 多个指标的并行查询流程。',
       effect: '丰富模型 Few-shot 学习样本，复杂查询准确率预计提升。',
       model: 'DeepSeek Chat', tokens: '1.0k', cost: '¥0.002', version: 'v3→v4', accepted: null,
     },

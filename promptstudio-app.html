@@ -580,20 +580,20 @@ const FUZZY = ["尽量","可能","大概","也许","适当的","酌情","相关"
 
 const FILES = [
   {
-    id:"cockpit", name:"驾驶舱-主agent prompt.md", badge:"主 Agent",
+    id:"main-agent", name:"主Agent-prompt.md", badge:"主 Agent",
     desc:"统筹子智能体调度",
     lines:[
       "---",
-      "name: finance-cockpit",
-      "description: 财经驾驶舱主智能体，统筹子智能体调度",
+      "name: main-agent-coordinator",
+      "description: 主协调智能体，统筹子智能体调度",
       "model: deepseek-chat",
       "---",
       "",
       "# Role",
-      "你是财经驾驶舱主智能体，负责理解用户意图并调度子智能体。",
+      "你是主协调智能体，负责理解用户意图并调度子智能体。",
       "",
       "# Instructions",
-      "1. 收到请求后，先判断意图类型（行情 / 财报 / 宏观）。",
+      "1. 收到请求后，先判断意图类型。",
       "2. 尽量保证输出为 JSON 格式。",
       "3. 调用工具前，先检查参数完整性。",
       "4. 子智能体返回后，汇总结果并给出结论。",
@@ -619,16 +619,16 @@ const FILES = [
     ]
   },
   {
-    id:"fin-agent", name:"财经子智能体-prompt.md", badge:"子 Agent",
-    desc:"财报数据提取与解读",
+    id:"fin-agent", name:"子Agent-prompt.md", badge:"子 Agent",
+    desc:"数据提取与解读",
     lines:[
       "---",
-      "name: finance-agent",
-      "description: 财经数据子智能体",
+      "name: sub-agent",
+      "description: 数据处理子智能体",
       "---",
       "",
       "# Instructions",
-      "你是财经子智能体，尽量保证输出 JSON。",
+      "你是数据处理子智能体，尽量保证输出 JSON。",
       "调用工具前，先检查参数完整性。",
       "",
       "## Examples",

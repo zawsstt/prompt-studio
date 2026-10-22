@@ -5,19 +5,19 @@
 // ── Sample Document Content ──
 
 export const SAMPLE_DOC = `---
-name: driving-cabin-main-agent
-description: 驾驶舱主 agent prompt，负责协调子 agent 完成财经数据分析任务
+name: main-agent-coordinator
+description: 主协调 agent prompt，负责协调子 agent 完成任务处理
 ---
 
-# 驾驶舱 — 主 Agent Prompt
+# 主协调 Agent Prompt
 
 ## Instructions
 
-你是一个财经数据分析驾驶舱的主协调 agent。你的核心职责是接收用户的财经数据查询请求，将其分解为子任务，并协调各子 agent 完成数据采集、计算与可视化。
+你是一个任务协调 agent。你的核心职责是接收用户的查询请求，将其分解为子任务，并协调各子 agent 完成任务执行。
 
-当用户提出查询时，请按以下步骤处理：
+当用户提出请求时，请按以下步骤处理：
 
-1. **解析意图**：识别用户请求中的实体（股票代码/指标名称/时间范围）
+1. **解析意图**：识别用户请求中的关键信息（实体/参数/时间范围）
 2. **分解任务**：将复杂请求拆分为可并行的子任务
 3. **调度子 Agent**：将子任务分配给对应的领域 agent
 4. **汇总结果**：合并各子 agent 返回的数据，生成统一视图
@@ -37,29 +37,29 @@ description: 驾驶舱主 agent prompt，负责协调子 agent 完成财经数�
 
 ## Examples
 
-用户输入："帮我分析茅台和五粮液过去一个季度的毛利率趋势"
-→ 解析为两个股票代码、毛利率指标、过去一个季度时间范围 → 并行查询 → 汇总对比
+用户输入："帮我分析过去一个季度的数据趋势"
+→ 解析时间范围和数据类型 → 并行查询 → 汇总对比
 
 ## References
 
-- 指标定义参见 references/fields.md
+- 数据定义参见 references/fields.md
 - 子 Agent 通信协议参见 SKILL.md 各子 agent 目录
 `;
 
 export const SAMPLE_DOC_MODIFIED = `---
-name: driving-cabin-main-agent
-description: 驾驶舱主 agent prompt，负责协调子 agent 完成财经数据分析任务
+name: main-agent-coordinator
+description: 主协调 agent prompt，负责协调子 agent 完成任务处理
 ---
 
-# 驾驶舱 — 主 Agent Prompt
+# 主协调 Agent Prompt
 
 ## Instructions
 
-你是财经数据分析驾驶舱的主协调 agent。核心职责：接收用户财经数据查询请求，分解为子任务，协调各子 agent 完成数据采集、计算与可视化。
+你是任务协调 agent。核心职责：接收用户查询请求，分解为子任务，协调各子 agent 完成任务执行。
 
 **处理步骤（严格按顺序执行）**：
 
-1. **解析意图**：识别用户请求中的实体（股票代码、指标名称、时间范围）
+1. **解析意图**：识别用户请求中的关键信息（实体、参数、时间范围）
 2. **分解任务**：将复杂请求拆分为可并行的子任务
 3. **调度子 Agent**：将子任务分配给对应的领域 agent
 4. **汇总结果**：合并各子 agent 返回的数据，生成统一视图
@@ -81,19 +81,19 @@ description: 驾驶舱主 agent prompt，负责协调子 agent 完成财经数�
 
 ## Examples
 
-### 示例 1：毛利率查询
-用户输入："帮我分析茅台和五粮液过去一个季度的毛利率趋势"
-→ 解析为两个股票代码、毛利率指标、过去一个季度时间范围
+### 示例 1：趋势分析
+用户输入："帮我分析过去一个季度的数据趋势"
+→ 解析时间范围和数据类型
 → 并行查询 → 汇总对比输出
 
-### 示例 2：多指标对比
-用户输入："对比格力、美的、海尔的净利率和ROE"
-→ 解析三个股票代码、两个指标
-→ 并行查询各公司数据 → 交叉对比 → 表格输出
+### 示例 2：多维度对比
+用户输入："对比产品A、B、C的核心指标"
+→ 解析三个产品、多个指标
+→ 并行查询各产品数据 → 交叉对比 → 表格输出
 
 ## References
 
-- 指标定义参见 references/fields.md
+- 数据定义参见 references/fields.md
 - 子 Agent 通信协议参见 SKILL.md 各子 agent 目录
 - 数据校验规则参见 references/validation-rules.md
 `;
@@ -183,8 +183,8 @@ export const MOCK_CHANGE_BLOCKS = [
     type: 'replace',
     oldRange: 'L10-L12',
     newRange: 'L10-L14',
-    oldSnippet: '你是一个财经数据分析驾驶舱的主协调 agent。你的核心职责是…',
-    newSnippet: '你是财经数据分析驾驶舱的主协调 agent。核心职责：…',
+    oldSnippet: '你是一个任务协调 agent。你的核心职责是…',
+    newSnippet: '你是任务协调 agent。核心职责：…',
     why: '祈使句语气更直接，减少"你"字冗余，模型遵循率更高。关联规则：style/person-consistency',
     how: '将 Instructions 章节中的描述性语句改为强祈使句，去掉冗余代词，精简指令结构。',
     effect: '指令确定性增强，输出格式更稳定，预计歧义率降低 20%+。',
@@ -216,9 +216,9 @@ export const MOCK_CHANGE_BLOCKS = [
     oldRange: '—',
     newRange: 'L25-L28',
     oldSnippet: '(不存在)',
-    newSnippet: '### 示例 2：多指标对比\n用户输入："对比格力、美的、海尔的净利率和ROE"…',
+    newSnippet: '### 示例 2：多维度对比\n用户输入："对比产品A、B、C的核心指标"…',
     why: '覆盖更多使用场景（多指标对比），提升模型在复杂查询下的表现。',
-    how: '新增多指标对比示例，展示三个股票代码 + 两个指标的并行查询流程。',
+    how: '丰富示例场景，展示三个实体 + 多个指标的并行查询流程。',
     effect: '丰富模型 Few-shot 学习样本，复杂查询准确率预计提升。',
     model: 'DeepSeek Chat',
     tokens: '1.0k',
@@ -233,7 +233,7 @@ export const MOCK_CHANGE_BLOCKS = [
 export const INITIAL_STATE = {
   doc: {
     currentFile: 'skill-main',
-    currentDoc: 'SKILL.md — 驾驶舱主agent',
+    currentDoc: 'SKILL.md — 主Agent',
     content: SAMPLE_DOC,
     candidateContent: null,
   },

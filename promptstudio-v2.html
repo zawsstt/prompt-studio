@@ -572,7 +572,7 @@ function Hero() {
       h('div', { className: 'window hero-window', ref: winRef },
         h('div', { className: 'window-bar' },
           h('span', { className: 'dot r' }), h('span', { className: 'dot y' }), h('span', { className: 'dot g' }),
-          h('span', { className: 'window-title' }, '驾驶舱-主agent prompt.md — PromptStudio'),
+          h('span', { className: 'window-title' }, '主Agent-prompt.md — PromptStudio'),
           h('div', { className: 'window-tabs' },
             h('span', { className: 'wtab on' }, '编辑'), h('span', { className: 'wtab' }, '对比'), h('span', { className: 'wtab' }, '历史')
           )
@@ -586,12 +586,12 @@ function Hero() {
             h('div', { className: 'mock-spectrum' }),
             h('div', { className: 'code' },
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '1'), h('span', { className: 'lc tok-p' }, '---')),
-              h('div', { className: 'cline' }, h('span', { className: 'ln' }, '2'), h('span', { className: 'lc' }, h('span', { className: 'tok-k' }, 'name'), ': finance-agent')),
-              h('div', { className: 'cline' }, h('span', { className: 'ln' }, '3'), h('span', { className: 'lc' }, h('span', { className: 'tok-k' }, 'description'), ': ', h('span', { className: 'tok-s' }, '财经数据子智能体'))),
+              h('div', { className: 'cline' }, h('span', { className: 'ln' }, '2'), h('span', { className: 'lc' }, h('span', { className: 'tok-k' }, 'name'), ': sub-agent')),
+              h('div', { className: 'cline' }, h('span', { className: 'ln' }, '3'), h('span', { className: 'lc' }, h('span', { className: 'tok-k' }, 'description'), ': ', h('span', { className: 'tok-s' }, '数据处理子智能体'))),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '4'), h('span', { className: 'lc tok-p' }, '---')),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '5'), h('span', { className: 'lc' }, ' ')),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '6'), h('span', { className: 'lc tok-h' }, '# Instructions')),
-              h('div', { className: 'cline active' }, h('span', { className: 'ln' }, '7'), h('span', { className: 'lc' }, '你是财经子智能体，', h('span', { className: 'squig' }, '尽量'), '保证输出 JSON。')),
+              h('div', { className: 'cline active' }, h('span', { className: 'ln' }, '7'), h('span', { className: 'lc' }, '你是数据处理子智能体，', h('span', { className: 'squig' }, '尽量'), '保证输出 JSON。')),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '8'), h('span', { className: 'lc' }, '调用工具前，先检查参数完整性。')),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '9'), h('span', { className: 'lc' }, ' ')),
               h('div', { className: 'cline' }, h('span', { className: 'ln' }, '10'), h('span', { className: 'lc tok-h' }, '## Examples')),
@@ -659,7 +659,7 @@ function Loop() {
 /* ---------- Diff 展示：行级依次点亮 ---------- */
 const DIFF_LEFT = [
   { type: '', ln: '6', text: '# Instructions', tok: 'tok-h' },
-  { type: 'del', text: '你是财经子智能体，尽量保证输出 JSON。' },
+  { type: 'del', text: '你是数据处理子智能体，尽量保证输出 JSON。' },
   { type: 'rep', text: '调用工具前，先检查参数完整性。' },
   { type: '', ln: '9', text: ' ' },
   { type: 'del', text: '## 输出要求' },
