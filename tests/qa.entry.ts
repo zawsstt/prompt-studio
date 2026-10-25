@@ -109,7 +109,7 @@ console.log('\n[7] crypto.ts（WebCrypto 核心）');
     const key = await getOrCreateDeviceKey();
     ok('返回 AES-GCM 非提取密钥', key.algorithm.name === 'AES-GCM' && key.extractable === false);
     ok('maskApiKey 打码', maskApiKey('sk-abcdef123456') === 'sk-••••••••••••');
-    ok('estimateCost 计算合理', estimateCost(2000, 'gpt-4o-mini') >= 0);
+    ok('estimateCost 计算合理', estimateCost('gpt-6.1-sol', 2000, 500) > 0);
   } catch (e: any) {
     // 仅在浏览器可用 IndexedDB 的部分会失败，核心算法已在上面验证
     console.log('  (crypto IDB 依赖在 Node 跳过：', e.message, ')');

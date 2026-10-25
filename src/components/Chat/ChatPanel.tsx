@@ -6,6 +6,7 @@ import { ThinkingOrb } from 'thinking-orbs';
 import { BorderBeam } from 'border-beam';
 import MarkdownView from '../shared/MarkdownView';
 import VoiceInput from './VoiceInput';
+import TourButton from '../shared/TourButton';
 import { toast } from '../shared/Toast';
 import type { PendingReference } from '../../types';
 
@@ -44,21 +45,33 @@ export default function ChatPanel({ width }: ChatPanelProps) {
 
   const currentTemplate = getTemplate(selectedProviderId);
 
+  /** 自适应高度：空态 40px，最高 160px，超出后内部滚动（不裁掉最后一行） */
+  const resizeTextarea = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 40), 160)}px`;
+    el.style.overflowY = el.scrollHeight > 160 ? 'auto' : 'hidden';
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // 输入变化后同步高度（含语音回填 / 引用草稿）
+  useEffect(() => {
+    resizeTextarea();
+  }, [input]);
 
   // Consume a draft prefilled by selection quick actions (ask / fix)
   useEffect(() => {
     if (chatInputDraft === null) return;
     setInput(chatInputDraft);
     setChatInputDraft(null);
-    const el = textareaRef.current;
-    if (el) {
-      el.style.height = '40px';
-      el.style.height = Math.min(el.scrollHeight, 200) + 'px';
-      el.focus();
-    }
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      resizeTextarea();
+    });
   }, [chatInputDraft, setChatInputDraft]);
 
   const handleSend = () => {
@@ -67,10 +80,13 @@ export default function ChatPanel({ width }: ChatPanelProps) {
     // Reference blockquote prepend is handled inside sendChatMessage (P1-8).
     sendChatMessage(input.trim());
     setInput('');
-    if (textareaRef.current) textareaRef.current.style.height = '40px';
+    // 点击发送后把焦点还给输入框，连续对话不用再点一次
+    requestAnimationFrame(() => textareaRef.current?.focus());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // 中文输入法选词时的 Enter 不能当成发送
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -80,9 +96,6 @@ export default function ChatPanel({ width }: ChatPanelProps) {
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInput(value);
-    const el = e.target;
-    el.style.height = '38px';
-    el.style.height = Math.min(Math.max(el.scrollHeight, 38), 200) + 'px';
 
     // P1-11: debounced workspace reference detection (300ms)
     if (detectTimer.current) clearTimeout(detectTimer.current);
@@ -142,6 +155,7 @@ export default function ChatPanel({ width }: ChatPanelProps) {
             </div>
           )}
         </div>
+        <TourButton id="chat" />
         <button
           className="btn btn-icon btn-ghost btn-sm"
           title="清空对话"
@@ -278,19 +292,14 @@ export default function ChatPanel({ width }: ChatPanelProps) {
               <Zap size={10} /> 增量
             </button>
           </div>
-          <span>· 规则集摘要已注入</span>
-          <span className="spacer" style={{ flex: 1 }} />
+          <span className="ctx-hint">· 规则集摘要已注入</span>
           <button
-            className="btn btn-ghost btn-xs"
+            className="btn btn-ghost btn-xs ctx-reasoning"
             onClick={toggleReasoning}
-            style={{ fontSize: '10px' }}
             title="显示/隐藏 AI 推理过程"
           >
-            {showReasoning ? (
-              <><Brain size={10} /> Reasoning ON</>
-            ) : (
-              <><Brain size={10} /> Reasoning OFF</>
-            )}
+            <Brain size={10} />
+            <span className="ctx-reasoning-label">{showReasoning ? 'Reasoning ON' : 'Reasoning OFF'}</span>
           </button>
         </div>
 
@@ -330,64 +339,70 @@ export default function ChatPanel({ width }: ChatPanelProps) {
           </div>
         )}
 
-        {chatReference && (
-          <div className="chat-reference-block">
-            <div className="chat-ref-header">
-              <Quote size={11} />
-              <span className="chat-ref-source" title={chatReference.text.slice(0, 500)}>{chatReference.sourceLabel}</span>
-              <button
-                className="btn btn-icon btn-ghost btn-xs chat-ref-close"
-                onClick={clearChatReference}
-                title="移除引用"
-              >
-                <X size={12} />
-              </button>
+        <div className={`chat-composer ${input.trim() ? 'has-text' : ''}`}>
+          {chatReference && (
+            <div className="chat-reference-block">
+              <div className="chat-ref-header">
+                <Quote size={11} />
+                <span className="chat-ref-source" title={chatReference.text.slice(0, 500)}>{chatReference.sourceLabel}</span>
+                <button
+                  className="btn btn-icon btn-ghost btn-xs chat-ref-close"
+                  onClick={clearChatReference}
+                  title="移除引用"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="chat-input-row">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder="描述修改需求，Enter 发送"
+              rows={1}
+              disabled={isStreaming}
+              aria-label="对话输入"
+              title="Enter 发送 · Shift+Enter 换行"
+            />
+            <div className="input-actions">
+              <VoiceInput
+                disabled={isStreaming}
+                currentInput={input}
+                onTranscriptChange={(val) => setInput(val)}
+                onSendDirectly={(val) => {
+                  if (!val.trim() || isStreaming) return;
+                  const finalContent = chatReference
+                    ? `> 引用内容：\n> ${chatReference.text.split('\n').join('\n> ')}\n\n${val}`
+                    : val;
+                  sendChatMessage(finalContent);
+                  setInput('');
+                  clearChatReference();
+                }}
+              />
+              {isStreaming ? (
+                <button className="btn btn-danger btn-sm chat-stop" onClick={stopStreaming}>
+                  <Square size={12} /> 停止
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary btn-sm chat-send"
+                  onClick={handleSend}
+                  disabled={!input.trim()}
+                  title="发送（Enter）"
+                  aria-label="发送消息"
+                >
+                  <Send size={13} />
+                  <span className="chat-send-label">发送</span>
+                </button>
+              )}
             </div>
           </div>
-        )}
-        <div className="chat-input-row">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder="描述你想要的修改… (Enter 发送，Shift+Enter 换行)"
-            rows={1}
-            disabled={isStreaming}
-          />
-          <div className="input-actions">
-            <VoiceInput
-              disabled={isStreaming}
-              currentInput={input}
-              onTranscriptChange={(val) => {
-                setInput(val);
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = '38px';
-                  textareaRef.current.style.height = Math.min(Math.max(textareaRef.current.scrollHeight, 38), 200) + 'px';
-                }
-              }}
-              onSendDirectly={(val) => {
-                if (!val.trim() || isStreaming) return;
-                const finalContent = chatReference
-                  ? `> 引用内容：\n> ${chatReference.text.split('\n').join('\n> ')}\n\n${val}`
-                  : val;
-                sendChatMessage(finalContent);
-                setInput('');
-                clearChatReference();
-                if (textareaRef.current) {
-                  textareaRef.current.style.height = '38px';
-                }
-              }}
-            />
-            {isStreaming ? (
-              <button className="btn btn-danger btn-sm" onClick={stopStreaming}>
-                <Square size={12} /> 停止
-              </button>
-            ) : (
-              <button className="btn btn-primary btn-sm" onClick={handleSend} disabled={!input.trim()}>
-                <Send size={12} /> 发送
-              </button>
-            )}
+          <div className="composer-foot">
+            <span>Enter 发送 · Shift+Enter 换行</span>
+            {input.length > 0 && <span className="composer-count">{input.length} 字</span>}
           </div>
         </div>
       </div>

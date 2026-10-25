@@ -11,11 +11,14 @@ import DiffView from '../Diff/DiffView';
 import VersionTimeline from '../Version/VersionTimeline';
 import WorkspaceScope from '../Workspace/WorkspaceScope';
 import RulesetManager from '../Ruleset/RulesetManager';
+import EvalView from '../Eval/EvalView';
+import TourButton from '../shared/TourButton';
+import { useAutoTour } from '../../hooks/useTour';
 import { FileText, ArrowLeft, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react';
 
 export default function AppShell() {
   const activeView = useStore(s => s.activeView);
-  const showEditor = activeView !== 'history' && activeView !== 'workspace' && activeView !== 'ruleset';
+  const showEditor = activeView !== 'history' && activeView !== 'workspace' && activeView !== 'ruleset' && activeView !== 'eval';
   const showChat = activeView === 'chat' || activeView === 'editor';
   const diffActive = useStore(s => s.diffActive);
   const rulesetId = useStore(s => s.rulesetId);
@@ -28,6 +31,7 @@ export default function AppShell() {
   const scopeSyncIssues = useStore(s => s.scopeSyncIssues);
   const fileValidationIssues = useStore(s => s.fileValidationIssues);
   const showWelcome = useStore(s => s.showWelcome);
+  const showOnboarding = useStore(s => s.showOnboarding);
 
   // 对话框宽度自由拖拽调整逻辑（默认 420px，极限边界 300px ~ 760px）
   const [chatWidth, setChatWidth] = useState(420);
@@ -67,6 +71,12 @@ export default function AppShell() {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [chatWidth]);
+
+  // 首屏就是 AI 对话：完成首次欢迎卡后，先把对话模块完整走一遍；
+  // 之后从导航进入「AI 对话」且未看过时也会自动播放。编辑工作区此时让位，避免两层引导打架。
+  const chatModuleActive = activeView === 'chat';
+  useAutoTour('chat', showChat && !diffActive && !showOnboarding && (showWelcome || chatModuleActive));
+  useAutoTour('editor', showEditor && !diffActive && !showWelcome && !showOnboarding && !chatModuleActive);
 
   const editingFile = editingFilePath ? importedFiles.find(f => f.path === editingFilePath) : null;
   const rulesetName =
@@ -110,6 +120,7 @@ export default function AppShell() {
                     <span className="chip-ok">✓ 规则校验通过</span>
                   ))}
                   {!showWelcome && <span className="pane-meta">{lineCount} 行 · Markdown</span>}
+                  {!showWelcome && <TourButton id="editor" />}
                 </div>
                 {scopeSyncIssues.length > 0 && (
                   <div className="sync-check-bar">
@@ -157,6 +168,7 @@ export default function AppShell() {
             <div className="version-view active">
               <div className="view-head">
                 <span>工作区范围选取</span>
+                <TourButton id="workspace" />
               </div>
               <WorkspaceScope />
             </div>
@@ -165,6 +177,7 @@ export default function AppShell() {
             <div className="version-view active">
               <div className="view-head">
                 <span>版本时间线</span>
+                <TourButton id="history" />
               </div>
               <VersionTimeline />
             </div>
@@ -172,6 +185,11 @@ export default function AppShell() {
           {activeView === 'ruleset' && (
             <div className="version-view active">
               <RulesetManager />
+            </div>
+          )}
+          {activeView === 'eval' && (
+            <div className="version-view active">
+              <EvalView />
             </div>
           )}
         </div>

@@ -1,7 +1,10 @@
+import { useCallback, useState } from 'react';
 import { useStore } from '../../store/useStore';
 import { RULESETS } from '../../data/rulesets';
-import { Upload, Sparkles, Menu, ChevronDown } from 'lucide-react';
+import { Upload, Sparkles, Menu, ChevronDown, Sun, Moon } from 'lucide-react';
 import { toast } from '../shared/Toast';
+import ModelQuickMenu from '../Settings/ModelQuickMenu';
+import { useEffectiveDark } from '../../hooks/useTheme';
 
 export default function TopBar() {
   const docName = useStore(s => s.docName);
@@ -21,10 +24,15 @@ export default function TopBar() {
   const activeView = useStore(s => s.activeView);
   const setActiveView = useStore(s => s.setActiveView);
   const changeBlocks = useStore(s => s.changeBlocks);
-  const openSettings = useStore(s => s.openSettings);
   const selectedModelName = useStore(s => s.selectedModelName);
   const showWelcome = useStore(s => s.showWelcome);
   const apiKeyConfigured = !!useStore(s => s.apiKeyInput);
+  const themeMode = useStore(s => s.themeMode);
+  const setThemeMode = useStore(s => s.setThemeMode);
+  const dark = useEffectiveDark();
+
+  const [quickOpen, setQuickOpen] = useState(false);
+  const closeQuick = useCallback(() => setQuickOpen(false), []);
 
   // 文件模式下，面包屑与错误统计应跟随当前打开的文件，而非始终固定为主文档
   const activeFile = editingFilePath ? importedFiles.find(f => f.path === editingFilePath) : undefined;
@@ -40,7 +48,7 @@ export default function TopBar() {
     }
   };
 
-  const onTab = (tab: 'edit' | 'diff' | 'history' | 'ruleset') => {
+  const onTab = (tab: 'edit' | 'diff' | 'history' | 'ruleset' | 'eval') => {
     if (tab === 'diff') {
       if (diffActive) {
         closeDiff();
@@ -51,11 +59,12 @@ export default function TopBar() {
       closeDiff();
       if (tab === 'history') setActiveView('history');
       else if (tab === 'ruleset') setActiveView('ruleset');
+      else if (tab === 'eval') setActiveView('eval');
       else setActiveView('editor');
     }
   };
 
-  const tabEditActive = !diffActive && activeView !== 'history' && activeView !== 'ruleset';
+  const tabEditActive = !diffActive && activeView !== 'history' && activeView !== 'ruleset' && activeView !== 'eval';
   const pendingCnt = changeBlocks.length;
 
   return (
@@ -94,18 +103,33 @@ export default function TopBar() {
           <button className={`tab ${activeView === 'ruleset' ? 'on' : ''}`} data-tab="ruleset" onClick={() => onTab('ruleset')}>
             规则集
           </button>
+          <button className={`tab ${activeView === 'eval' ? 'on' : ''}`} data-tab="eval" onClick={() => onTab('eval')}>
+            评测
+          </button>
         </div>
         <span className="spacer" />
         <div className="top-right">
           <button
-            className="model-pill"
-            onClick={openSettings}
-            title={apiKeyConfigured ? '已接入模型供应商 · 点击设置' : '尚未配置 API Key · 点击去配置'}
+            className="btn btn-icon btn-ghost btn-sm theme-toggle"
+            onClick={() => setThemeMode(dark ? 'light' : 'dark')}
+            title={`${dark ? '切换到浅色' : '切换到深色'}（当前：${themeMode === 'system' ? '跟随系统' : themeMode === 'dark' ? '深色' : '浅色'}）`}
+            aria-label="切换明暗主题"
           >
-            <span className={`pulse ${apiKeyConfigured ? '' : 'off'}`} />
-            <span className="mn">{apiKeyConfigured ? (selectedModelName || '已接入模型') : '未配置 API Key'}</span>
-            <ChevronDown size={11} className="model-pill-chevron" />
+            {dark ? <Sun size={13} /> : <Moon size={13} />}
           </button>
+          <div className="model-quick-wrap">
+            <button
+              className={`model-pill ${quickOpen ? 'on' : ''}`}
+              onClick={() => setQuickOpen(v => !v)}
+              title={apiKeyConfigured ? '快速切换模型 · 点击展开' : '尚未配置 API Key · 点击选择供应商'}
+              aria-expanded={quickOpen}
+            >
+              <span className={`pulse ${apiKeyConfigured ? '' : 'off'}`} />
+              <span className="mn">{selectedModelName || '选择模型'}</span>
+              <ChevronDown size={11} className="model-pill-chevron" />
+            </button>
+            {quickOpen && <ModelQuickMenu onClose={closeQuick} />}
+          </div>
           <select
             className="sel"
             value={rulesetId}

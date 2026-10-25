@@ -25244,32 +25244,41 @@ function buildFromOps(ops, oldLines, newLines, ignoreReorder = false) {
       const newStart = newLineNum;
       const oldLen = op.oldLines.length;
       const newLen = op.newLines.length;
-      const totalChars = op.oldLines.join("").length + op.newLines.join("").length;
-      const shouldComputeCharDiffs = totalChars < 5e3;
-      const charDiffs = shouldComputeCharDiffs ? computeCharDiffs(op.oldLines.join("\n"), op.newLines.join("\n")) : [];
-      for (const line of op.oldLines) {
-        leftLines.push({
-          type: "replaced",
-          content: line,
-          oldLineNum: oldLineNum++,
-          changeBlockIdx: changeIdx,
-          charDiffs: shouldComputeCharDiffs ? charDiffs : void 0
-        });
-      }
-      for (let p = oldLen; p < newLen; p++) {
-        leftLines.push({ type: "empty", content: "", changeBlockIdx: changeIdx });
-      }
-      for (const line of op.newLines) {
-        rightLines.push({
-          type: "replaced",
-          content: line,
-          newLineNum: newLineNum++,
-          changeBlockIdx: changeIdx,
-          charDiffs: shouldComputeCharDiffs ? charDiffs : void 0
-        });
-      }
-      for (let p = newLen; p < oldLen; p++) {
-        rightLines.push({ type: "empty", content: "", changeBlockIdx: changeIdx });
+      const pairCount = Math.max(oldLen, newLen);
+      for (let k = 0; k < pairCount; k++) {
+        const oldLine = k < oldLen ? op.oldLines[k] : null;
+        const newLine = k < newLen ? op.newLines[k] : null;
+        if (oldLine !== null && newLine !== null && oldLine === newLine) {
+          leftLines.push({ type: "equal", content: oldLine, oldLineNum: oldLineNum++ });
+          rightLines.push({ type: "equal", content: newLine, newLineNum: newLineNum++ });
+          continue;
+        }
+        let charDiffs;
+        if (oldLine !== null && newLine !== null && oldLine.length + newLine.length < 5e3) {
+          charDiffs = computeCharDiffs(oldLine, newLine);
+        }
+        if (oldLine !== null) {
+          leftLines.push({
+            type: "replaced",
+            content: oldLine,
+            oldLineNum: oldLineNum++,
+            changeBlockIdx: changeIdx,
+            charDiffs
+          });
+        } else {
+          leftLines.push({ type: "empty", content: "", changeBlockIdx: changeIdx });
+        }
+        if (newLine !== null) {
+          rightLines.push({
+            type: "replaced",
+            content: newLine,
+            newLineNum: newLineNum++,
+            changeBlockIdx: changeIdx,
+            charDiffs
+          });
+        } else {
+          rightLines.push({ type: "empty", content: "", changeBlockIdx: changeIdx });
+        }
       }
       changeBlocks.push({
         id: `cb-${changeIdx}`,
@@ -25556,6 +25565,8 @@ var PromptStudioDB = class extends import_wrapper_default {
   workspaces;
   imports;
   keystore;
+  localFolders;
+  evalRuns;
   constructor() {
     super("PromptStudioDB");
     this.version(1).stores({
@@ -25571,6 +25582,38 @@ var PromptStudioDB = class extends import_wrapper_default {
       workspaces: "id, docId, createdAt",
       imports: "path, docId, importedAt",
       keystore: "id"
+    });
+    this.version(3).stores({
+      docs: "id, name, rulesetId, updatedAt",
+      versions: "id, docId, versionNumber, createdAt",
+      chats: "id, docId, updatedAt",
+      rulesets: "id, name, createdAt",
+      workspaces: "id, docId, createdAt",
+      imports: "path, docId, importedAt",
+      keystore: "id",
+      localFolders: "id, createdAt"
+    });
+    this.version(4).stores({
+      docs: "id, name, rulesetId, updatedAt",
+      versions: "id, docId, versionNumber, createdAt",
+      chats: "id, docId, updatedAt",
+      rulesets: "id, name, createdAt",
+      workspaces: "id, docId, createdAt",
+      imports: "path, docId, importedAt",
+      keystore: "id",
+      localFolders: "id, createdAt",
+      evalRuns: "id, docId, createdAt"
+    });
+    this.version(5).stores({
+      docs: "id, name, rulesetId, updatedAt",
+      versions: "id, docId, versionNumber, createdAt",
+      chats: "id, docId, updatedAt",
+      rulesets: "id, name, createdAt",
+      workspaces: "id, docId, createdAt",
+      imports: "path, docId, importedAt",
+      keystore: "id",
+      localFolders: "id, createdAt",
+      evalRuns: "id, docId, versionId, createdAt"
     });
   }
 };
@@ -25616,33 +25659,41 @@ function maskApiKey(key) {
   return key.slice(0, 3) + "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" + key.slice(-3);
 }
 var PRICING = {
-  "deepseek-chat": { input: 1e-3, output: 2e-3 },
-  "deepseek-reasoner": { input: 4e-3, output: 0.016 },
-  "gpt-4o": { input: 5e-3, output: 0.015 },
-  "gpt-4o-mini": { input: 3e-4, output: 6e-4 },
-  "gpt-4-turbo": { input: 0.01, output: 0.03 },
-  "claude-sonnet-4-20250514": { input: 3e-3, output: 0.015 },
-  "claude-haiku-4-5-20250315": { input: 1e-3, output: 5e-3 },
-  "claude-opus-4-20250514": { input: 0.015, output: 0.075 },
+  // DeepSeek
+  "deepseek-flash": { input: 3e-4, output: 11e-4 },
+  "deepseek-v4-pro": { input: 2e-3, output: 8e-3 },
+  // OpenAI
+  "gpt-6.1-sol": { input: 5e-3, output: 0.02 },
+  "gpt-6-astra": { input: 0.01, output: 0.04 },
+  "gpt-6-luna": { input: 1e-3, output: 4e-3 },
+  // Anthropic
+  "claude-opus-5-5": { input: 0.015, output: 0.075 },
+  "claude-sonnet-5-5": { input: 3e-3, output: 0.015 },
+  "claude-haiku-5-5": { input: 1e-3, output: 5e-3 },
+  "claude-fable-5-1": { input: 0.02, output: 0.1 },
   // Gemini
-  "gemini-2.5-flash": { input: 3e-4, output: 25e-4 },
-  "gemini-2.5-pro": { input: 125e-5, output: 0.01 },
+  "gemini-4-argon": { input: 2e-3, output: 0.012 },
+  "gemini-3.8-flash": { input: 3e-4, output: 25e-4 },
+  "gemini-3.1-pro-preview": { input: 125e-5, output: 0.01 },
   // Moonshot (Kimi)
-  "kimi-k2-0711-preview": { input: 6e-4, output: 25e-4 },
-  "moonshot-v1-8k": { input: 12e-4, output: 12e-4 },
-  "moonshot-v1-32k": { input: 24e-4, output: 24e-4 },
+  "kimi-k3": { input: 3e-3, output: 0.015 },
+  "kimi-k2.7-code": { input: 6e-4, output: 25e-4 },
+  "kimi-k2.7-code-highspeed": { input: 4e-4, output: 2e-3 },
+  "kimi-k2.6": { input: 6e-4, output: 25e-4 },
   // Qwen (通义千问)
-  "qwen-plus": { input: 8e-4, output: 2e-3 },
-  "qwen-max": { input: 24e-4, output: 96e-4 },
-  "qwen-turbo": { input: 3e-4, output: 6e-4 },
+  "qwen3.8-max": { input: 12e-4, output: 6e-3 },
+  "qwen3.8-flash": { input: 15e-5, output: 5e-4 },
+  "qwen3.7-plus": { input: 4e-4, output: 12e-4 },
+  // Zhipu (智谱 GLM)
+  "glm-5.3": { input: 1e-3, output: 4e-3 },
+  "glm-5.3-flash": { input: 2e-4, output: 8e-4 },
+  "glm-5.3-flashx": { input: 4e-4, output: 16e-4 },
+  "glm-5.2": { input: 8e-4, output: 32e-4 },
   // OpenRouter (通用档位)
-  "openai/gpt-4o": { input: 5e-3, output: 0.015 },
-  "anthropic/claude-sonnet-4": { input: 3e-3, output: 0.015 },
-  "google/gemini-2.5-flash": { input: 3e-4, output: 25e-4 },
-  // Ollama local models: free
-  "llama3.1": { input: 0, output: 0 },
-  "qwen2.5": { input: 0, output: 0 },
-  "deepseek-r1": { input: 0, output: 0 }
+  "openai/gpt-6.1-sol": { input: 5e-3, output: 0.02 },
+  "anthropic/claude-sonnet-5.5": { input: 3e-3, output: 0.015 },
+  "google/gemini-4-argon": { input: 2e-3, output: 0.012 },
+  "z-ai/glm-5.3": { input: 1e-3, output: 4e-3 }
 };
 function estimateCost(model, inputTokens, outputTokens) {
   const pricing = PRICING[model] || { input: 2e-3, output: 6e-3 };
@@ -25666,7 +25717,7 @@ var RS = {
   name: "\u6D4B\u8BD5\u96C6",
   allowUnknownModules: false,
   structureRules: [
-    { type: "require-frontmatter", error: "\u7F3A\u5C11 frontmatter", level: "error" },
+    { type: "require-frontmatter", fields: ["name"], error: "\u7F3A\u5C11 frontmatter", level: "error" },
     { type: "require-module", module: "instructions", error: "\u7F3A\u5C11 instructions", level: "error" },
     { type: "forbid-field", fields: ["internal-notes"], error: "\u542B\u7981\u7528\u5B57\u6BB5", level: "warning" }
   ],
@@ -25687,9 +25738,9 @@ internal-notes: \u8349\u7A3F
 # instructions
 \u5C3D\u91CF\u8C03\u7528\u5DE5\u5177\u3002`;
   const issues = validate(bad, RS);
-  ok("\u6A21\u7CCA\u8BCD\u89E6\u53D1 style \u8B66\u544A", issues.some((i) => i.level === "warning" && /模糊词/.test(i.message)));
+  ok("\u6A21\u7CCA\u8BCD\u89E6\u53D1 style \u8B66\u544A", issues.some((i) => i.severity === "warning" && /模糊词/.test(i.message)));
   ok("\u7981\u7528\u5B57\u6BB5\u89E6\u53D1 forbid-field", issues.some((i) => /禁用字段/.test(i.message)));
-  ok("\u7F3A\u5C11 frontmatter \u89E6\u53D1 error", issues.some((i) => i.level === "error" && /frontmatter/.test(i.message)));
+  ok("\u7F3A\u5C11 frontmatter \u5B57\u6BB5\u89E6\u53D1 error", issues.some((i) => i.severity === "error" && /frontmatter/.test(i.message)));
   ok("\u884C\u53F7\u4FE1\u606F\u5B58\u5728", issues.every((i) => typeof i.line === "number"));
 }
 {
@@ -25699,7 +25750,7 @@ name: x
 # instructions
 \u7528\u7948\u4F7F\u53E5\u8F93\u51FA JSON\u3002`;
   const issues = validate(good, RS);
-  ok("\u5408\u89C4\u6587\u6863\u65E0 error", !issues.some((i) => i.level === "error"));
+  ok("\u5408\u89C4\u6587\u6863\u65E0 error", !issues.some((i) => i.severity === "error"));
 }
 console.log("\n[2] autoOrganize.ts\uFF08\u6A21\u5757\u91CD\u6392\uFF09");
 {
@@ -25727,12 +25778,12 @@ ${p2}`;
 ${p1}`;
   const r1 = buildDiffLines(old, neo, { ignoreReorder: false });
   const r2 = buildDiffLines(old, neo, { ignoreReorder: true });
-  ok("\u975E\u5FFD\u7565\u91CD\u6392\u68C0\u6D4B\u5230 reordered \u5757", r1.blocks.some((b) => b.type === "reordered"));
-  ok("\u5FFD\u7565\u91CD\u6392\u4E0D\u4EA7\u751F reordered \u5757", !r2.blocks.some((b) => b.type === "reordered"));
+  ok("\u975E\u5FFD\u7565\u91CD\u6392\u68C0\u6D4B\u5230 reordered \u5757", r1.changeBlocks.some((b) => b.type === "reordered"));
+  ok("\u5FFD\u7565\u91CD\u6392\u4E0D\u4EA7\u751F reordered \u5757", !r2.changeBlocks.some((b) => b.type === "reordered"));
   const o2 = "line1\nline2\nline3";
   const n2 = "line1\nline2\nline2.5\nline3";
   const rb = buildDiffLines(o2, n2);
-  const merged = applyChanges(o2, n2, rb.blocks);
+  const merged = applyChanges(o2, n2, rb.changeBlocks);
   ok("applyChanges \u5F80\u8FD4\u8FD8\u539F\u65B0\u6587\u672C", merged === n2, `got=${JSON.stringify(merged)}`);
   ok("estimateTokens \u4E3A\u6B63", estimateTokens(n2) > 0);
 }
@@ -25778,7 +25829,7 @@ console.log("\n[7] crypto.ts\uFF08WebCrypto \u6838\u5FC3\uFF09");
     const key = await getOrCreateDeviceKey();
     ok("\u8FD4\u56DE AES-GCM \u975E\u63D0\u53D6\u5BC6\u94A5", key.algorithm.name === "AES-GCM" && key.extractable === false);
     ok("maskApiKey \u6253\u7801", maskApiKey("sk-abcdef123456") === "sk-\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022");
-    ok("estimateCost \u8BA1\u7B97\u5408\u7406", estimateCost(2e3, "gpt-4o-mini") >= 0);
+    ok("estimateCost \u8BA1\u7B97\u5408\u7406", estimateCost("gpt-6.1-sol", 2e3, 500) > 0);
   } catch (e) {
     console.log("  (crypto IDB \u4F9D\u8D56\u5728 Node \u8DF3\u8FC7\uFF1A", e.message, ")");
   }

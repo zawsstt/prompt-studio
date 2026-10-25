@@ -3,6 +3,8 @@ import { useStore } from '../../store/useStore';
 import { RULESETS } from '../../data/rulesets';
 import type { RuleSet } from '../../types';
 import { X, Upload, Plus, Pencil, Trash2, Copy, ChevronDown, ChevronRight, ListTree, Check, AlertTriangle } from 'lucide-react';
+import TourButton from '../shared/TourButton';
+import { useAutoTour } from '../../hooks/useTour';
 
 /** 规则配置的可读中文描述 */
 function ruleLine(rs: RuleSet, kind: 'structure' | 'order' | 'format' | 'style', i: number): string {
@@ -52,6 +54,7 @@ const KIND_LABELS: Record<string, { label: string; cls: string }> = {
 };
 
 export default function RulesetManager() {
+  useAutoTour('ruleset');
   const rulesetId = useStore(s => s.rulesetId);
   const setRuleset = useStore(s => s.setRuleset);
   const customRulesets = useStore(s => s.customRulesets);
@@ -154,6 +157,7 @@ export default function RulesetManager() {
           <div className="rsm-sub">查看各规则配置逻辑与校验情况，支持自定义编辑与导入</div>
         </div>
         <div className="rsm-actions">
+          <TourButton id="ruleset" />
           <button className="btn btn-ghost btn-sm" onClick={() => setShowCreate(true)}>
             <Plus size={12} /> 新建空白自定义
           </button>

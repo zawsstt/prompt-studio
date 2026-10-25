@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { MessageSquare, FolderTree, Clock, Settings as SettingsIcon, FileText, CheckSquare, ChevronDown, ChevronRight, ListTree } from 'lucide-react';
+import { MessageSquare, FolderTree, Clock, Settings as SettingsIcon, FileText, CheckSquare, ChevronDown, ChevronRight, ListTree, FlaskConical } from 'lucide-react';
 
 export default function NavColumn() {
   const activeView = useStore(s => s.activeView);
@@ -27,11 +27,12 @@ export default function NavColumn() {
   const navItems = [
     { id: 'chat' as const, icon: MessageSquare, label: 'AI 对话', desc: '修改助手', submenu: true },
     { id: 'workspace' as const, icon: FolderTree, label: '工作区范围', desc: '上下文引用' },
+    { id: 'eval' as const, icon: FlaskConical, label: '提示词评测', desc: '用例与断言' },
     { id: 'history' as const, icon: Clock, label: '版本历史', desc: '时间线回溯' },
     { id: 'ruleset' as const, icon: ListTree, label: '规则集', desc: '配置与编辑' },
   ];
 
-  const go = (id: 'chat' | 'workspace' | 'history' | 'ruleset') => {
+  const go = (id: 'chat' | 'workspace' | 'history' | 'ruleset' | 'eval') => {
     closeDiff();
     setActiveView(id);
     document.body.classList.remove('sb-open');

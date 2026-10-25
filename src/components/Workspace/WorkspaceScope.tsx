@@ -2,8 +2,10 @@ import { useState, useRef } from 'react';
 import { useStore } from '../../store/useStore';
 import { Plus, Trash2, ChevronDown, ChevronRight, Lock, Unlock, CheckSquare, Square, FolderOpen, Folder, Upload, FolderInput, FileText, Send, ChevronsUpDown, HardDrive, RefreshCw, ShieldAlert } from 'lucide-react';
 import type { WorkspaceScope } from '../../types';
+import { useAutoTour } from '../../hooks/useTour';
 
 export default function WorkspaceScopeView() {
+  useAutoTour('workspace');
   const workspaceScopes = useStore(s => s.workspaceScopes);
   const currentScopeId = useStore(s => s.currentScopeId);
   const importedFiles = useStore(s => s.importedFiles);

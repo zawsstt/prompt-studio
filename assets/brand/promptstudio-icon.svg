@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="PromptStudio">
+  <defs>
+    <linearGradient id="psGradBrand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="psGradSheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(4,4)">
+    <rect width="56" height="56" rx="14" fill="url(#psGradBrand)"/>
+    <rect width="56" height="56" rx="14" fill="url(#psGradSheen)"/>
+    <g transform="rotate(-7 19.5 29)">
+      <rect x="9" y="15" width="21" height="28" rx="5" fill="#FFFFFF" opacity="0.22"/>
+    </g>
+    <g transform="rotate(7 36.5 29)">
+      <rect x="26" y="15" width="21" height="28" rx="5" fill="#FFFFFF" opacity="0.96"/>
+    </g>
+    <path d="M11 40 H17" stroke="#F87171" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M41 39.5 L43.5 42 L47.5 37.5" stroke="#4ADE80" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M28 6 L30.2 10.8 L35 13 L30.2 15.2 L28 20 L25.8 15.2 L21 13 L25.8 10.8 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

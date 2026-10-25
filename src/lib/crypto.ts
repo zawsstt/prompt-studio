@@ -167,33 +167,41 @@ export function loadModelConfig(): StoredModelConfig | null {
 
 // ── Cost estimation (rough, per 1K tokens, USD) ──
 const PRICING: Record<string, { input: number; output: number }> = {
-  'deepseek-chat': { input: 0.001, output: 0.002 },
-  'deepseek-reasoner': { input: 0.004, output: 0.016 },
-  'gpt-4o': { input: 0.005, output: 0.015 },
-  'gpt-4o-mini': { input: 0.0003, output: 0.0006 },
-  'gpt-4-turbo': { input: 0.01, output: 0.03 },
-  'claude-sonnet-4-20250514': { input: 0.003, output: 0.015 },
-  'claude-haiku-4-5-20250315': { input: 0.001, output: 0.005 },
-  'claude-opus-4-20250514': { input: 0.015, output: 0.075 },
+  // DeepSeek
+  'deepseek-flash': { input: 0.0003, output: 0.0011 },
+  'deepseek-v4-pro': { input: 0.002, output: 0.008 },
+  // OpenAI
+  'gpt-6.1-sol': { input: 0.005, output: 0.02 },
+  'gpt-6-astra': { input: 0.01, output: 0.04 },
+  'gpt-6-luna': { input: 0.001, output: 0.004 },
+  // Anthropic
+  'claude-opus-5-5': { input: 0.015, output: 0.075 },
+  'claude-sonnet-5-5': { input: 0.003, output: 0.015 },
+  'claude-haiku-5-5': { input: 0.001, output: 0.005 },
+  'claude-fable-5-1': { input: 0.02, output: 0.1 },
   // Gemini
-  'gemini-2.5-flash': { input: 0.0003, output: 0.0025 },
-  'gemini-2.5-pro': { input: 0.00125, output: 0.01 },
+  'gemini-4-argon': { input: 0.002, output: 0.012 },
+  'gemini-3.8-flash': { input: 0.0003, output: 0.0025 },
+  'gemini-3.1-pro-preview': { input: 0.00125, output: 0.01 },
   // Moonshot (Kimi)
-  'kimi-k2-0711-preview': { input: 0.0006, output: 0.0025 },
-  'moonshot-v1-8k': { input: 0.0012, output: 0.0012 },
-  'moonshot-v1-32k': { input: 0.0024, output: 0.0024 },
+  'kimi-k3': { input: 0.003, output: 0.015 },
+  'kimi-k2.7-code': { input: 0.0006, output: 0.0025 },
+  'kimi-k2.7-code-highspeed': { input: 0.0004, output: 0.002 },
+  'kimi-k2.6': { input: 0.0006, output: 0.0025 },
   // Qwen (通义千问)
-  'qwen-plus': { input: 0.0008, output: 0.002 },
-  'qwen-max': { input: 0.0024, output: 0.0096 },
-  'qwen-turbo': { input: 0.0003, output: 0.0006 },
+  'qwen3.8-max': { input: 0.0012, output: 0.006 },
+  'qwen3.8-flash': { input: 0.00015, output: 0.0005 },
+  'qwen3.7-plus': { input: 0.0004, output: 0.0012 },
+  // Zhipu (智谱 GLM)
+  'glm-5.3': { input: 0.001, output: 0.004 },
+  'glm-5.3-flash': { input: 0.0002, output: 0.0008 },
+  'glm-5.3-flashx': { input: 0.0004, output: 0.0016 },
+  'glm-5.2': { input: 0.0008, output: 0.0032 },
   // OpenRouter (通用档位)
-  'openai/gpt-4o': { input: 0.005, output: 0.015 },
-  'anthropic/claude-sonnet-4': { input: 0.003, output: 0.015 },
-  'google/gemini-2.5-flash': { input: 0.0003, output: 0.0025 },
-  // Ollama local models: free
-  'llama3.1': { input: 0, output: 0 },
-  'qwen2.5': { input: 0, output: 0 },
-  'deepseek-r1': { input: 0, output: 0 },
+  'openai/gpt-6.1-sol': { input: 0.005, output: 0.02 },
+  'anthropic/claude-sonnet-5.5': { input: 0.003, output: 0.015 },
+  'google/gemini-4-argon': { input: 0.002, output: 0.012 },
+  'z-ai/glm-5.3': { input: 0.001, output: 0.004 },
 };
 
 export function estimateCost(model: string, inputTokens: number, outputTokens: number): number {

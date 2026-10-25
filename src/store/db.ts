@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { PromptDoc, Version, ChatSession, ChangeBlock, RuleSet, WorkspaceScope, ImportedFileInfo } from '../types';
+import type { PromptDoc, Version, ChatSession, ChangeBlock, RuleSet, WorkspaceScope, ImportedFileInfo, EvalRun } from '../types';
 
 export interface VersionRecord {
   id: string;
@@ -61,6 +61,7 @@ export class PromptStudioDB extends Dexie {
   imports!: Table<ImportRecord, string>;
   keystore!: Table<KeyRecord, string>;
   localFolders!: Table<LocalFolderRecord, string>;
+  evalRuns!: Table<EvalRun, string>;
 
   constructor() {
     super('PromptStudioDB');
@@ -88,6 +89,30 @@ export class PromptStudioDB extends Dexie {
       imports: 'path, docId, importedAt',
       keystore: 'id',
       localFolders: 'id, createdAt',
+    });
+    // v4: 评测运行记录（P0-1）。一次运行 = 一组 CaseResult 快照，与 docId 关联。
+    this.version(4).stores({
+      docs: 'id, name, rulesetId, updatedAt',
+      versions: 'id, docId, versionNumber, createdAt',
+      chats: 'id, docId, updatedAt',
+      rulesets: 'id, name, createdAt',
+      workspaces: 'id, docId, createdAt',
+      imports: 'path, docId, importedAt',
+      keystore: 'id',
+      localFolders: 'id, createdAt',
+      evalRuns: 'id, docId, createdAt',
+    });
+    // v5: 回归基线（P1-2）——运行记录绑定 versionId，可按版本检索历史分数。
+    this.version(5).stores({
+      docs: 'id, name, rulesetId, updatedAt',
+      versions: 'id, docId, versionNumber, createdAt',
+      chats: 'id, docId, updatedAt',
+      rulesets: 'id, name, createdAt',
+      workspaces: 'id, docId, createdAt',
+      imports: 'path, docId, importedAt',
+      keystore: 'id',
+      localFolders: 'id, createdAt',
+      evalRuns: 'id, docId, versionId, createdAt',
     });
   }
 }
@@ -226,4 +251,19 @@ export function exportVersionMarkdown(version: VersionRecord): string {
   lines.push(`---`, ``, `## 文档内容`, ``, '```markdown', version.content, '```');
 
   return lines.join('\n');
+}
+
+// ── Eval run operations (P0-1 / P1-2) ──
+export async function saveEvalRun(run: EvalRun): Promise<void> {
+  await db.evalRuns.put(run);
+}
+
+/** Newest first. Baseline curves need more history than the 4-row list, so callers pass a limit. */
+export async function getEvalRuns(docId: string, limit = 100): Promise<EvalRun[]> {
+  const runs = await db.evalRuns.where('docId').equals(docId).reverse().sortBy('createdAt');
+  return runs.slice(0, limit);
+}
+
+export async function deleteEvalRun(id: string): Promise<void> {
+  await db.evalRuns.delete(id);
 }

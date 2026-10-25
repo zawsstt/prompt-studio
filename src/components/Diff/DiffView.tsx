@@ -5,6 +5,8 @@ import type { DiffLine, SelectionQuickActionType } from '../../types';
 import { estimateTokens } from '../../lib/diff';
 import { Check, X, ChevronUp, ChevronDown, XCircle, ChevronRight, FileText } from 'lucide-react';
 import SelectionToolbar from '../shared/SelectionToolbar';
+import TourButton from '../shared/TourButton';
+import { useAutoTour } from '../../hooks/useTour';
 
 /** Selection toolbar state for the diff view (P1-8). */
 interface DiffSelection {
@@ -34,6 +36,7 @@ function buildAlignedRows(left: DiffLine[], right: DiffLine[]): AlignedRow[] {
 }
 
 export default function DiffView() {
+  useAutoTour('diff');
   const diffLeftLines = useStore(s => s.diffLeftLines);
   const diffRightLines = useStore(s => s.diffRightLines);
   const changeBlocks = useStore(s => s.changeBlocks);
@@ -349,6 +352,7 @@ export default function DiffView() {
           <span><span className="stat-dot" style={{ background: 'var(--diff-del)' }} /> -{delCount}</span>
           <span style={{ color: 'var(--text-muted)' }}>~{tokenEst} tokens</span>
         </div>
+        <TourButton id="diff" />
         <button className="btn btn-ghost btn-sm" onClick={closeDiff} title="退出对比">
           <XCircle size={12} /> 退出
         </button>

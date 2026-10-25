@@ -5,9 +5,10 @@ import type {
   WorkspaceScope, ScopeModule, ChatReference, ImportedFileInfo,
   PendingReference, ChangeBlockType, ScopeSyncIssue,
   SelectionQuickActionType, SelectionActionPayload,
+  EvalCase, Assertion, AssertionType, CaseResult, EvalRun,
 } from '../types';
 import { findRuleset } from '../data/rulesets';
-import { PROVIDER_TEMPLATES, getTemplate } from '../data/providers';
+import { PROVIDER_TEMPLATES, CUSTOM_TEMPLATE, getTemplate } from '../data/providers';
 import { SAMPLE_DOC } from '../data/sampleDoc';
 import { validate, autoOrganize, findModules, reorderModules } from '../lib/validation';
 import { buildDiffLines, applyChanges, estimateTokens } from '../lib/diff';
@@ -30,10 +31,24 @@ import {
   saveRuleset, getCustomRulesets, deleteRuleset,
   saveWorkspaceScope, getWorkspaceScopes, deleteWorkspaceScope,
   saveImportedFile, getImportedFiles, deleteImportedFile,
+  saveEvalRun, getEvalRuns,
   clearAllData,
   type VersionRecord,
 } from './db';
+import { runEval as runEvalCases } from '../lib/eval/runner';
+import { extractVariables, scaffoldVars } from '../lib/eval/variables';
+import { parseEvalConfig, stringifyEvalConfig, exampleEvalConfig, makeId } from '../lib/eval/config';
+import { scoreRun } from '../lib/eval/baseline';
+import { cloneCases, datasetHash } from '../lib/eval/dataset';
+import {
+  applyTheme, applyToolbarStyle, loadThemeMode, loadToolbarStyle,
+  persistThemeMode, persistToolbarStyle,
+  type ThemeMode, type ToolbarStyle,
+} from '../lib/theme';
+import type { TourId } from '../lib/tours';
 import { toast } from '../components/shared/Toast';
+
+export type SettingsSection = 'models' | 'appearance' | 'privacy' | 'about';
 
 interface AppState {
   // ── Document ──
@@ -136,8 +151,21 @@ interface AppState {
   // ── Ruleset import modal (P1-5 UI) ──
   rulesetImportOpen: boolean;
 
+  // ── Evaluation (P0-1) ──
+  evalCases: EvalCase[];
+  evalSelectedCaseId: string | null;
+  evalPromptRole: 'system' | 'user';
+  evalRunning: boolean;
+  evalResults: CaseResult[] | null;
+  evalRuns: EvalRun[];
+  evalError: string | null;
+  /** P1-2: 指定用哪个版本的内容作为评测对象（null = 当前文档 / 打开的文件） */
+  evalTargetVersionId: string | null;
+  /** P1-2: 当前结果对应的运行记录 id（基线对比的“本次”） */
+  evalCurrentRunId: string | null;
+
   // ── UI ──
-  activeView: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset';
+  activeView: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset' | 'eval';
 
   // ── Actions ──
   init: () => Promise<void>;
@@ -192,7 +220,17 @@ interface AppState {
   togglePin: () => void;
 
   // Settings
-  openSettings: () => Promise<void>;
+  settingsSection: SettingsSection;
+  themeMode: ThemeMode;
+  toolbarStyle: ToolbarStyle;
+  setThemeMode: (mode: ThemeMode) => void;
+  setToolbarStyle: (style: ToolbarStyle) => void;
+  /** 模块引导（P1-13）：当前正在播放的引导 */
+  activeTour: TourId | null;
+  startTour: (id: TourId) => void;
+  endTour: () => void;
+  openSettings: (section?: SettingsSection) => Promise<void>;
+  setSettingsSection: (section: SettingsSection) => void;
   closeSettings: () => void;
   setProvider: (id: string) => void;
   setModelName: (name: string) => void;
@@ -200,6 +238,10 @@ interface AppState {
   setBaseUrlOverride: (url: string) => void;
   doTestConnection: () => Promise<void>;
   doSaveSettings: () => Promise<void>;
+  /** 顶栏模型胶囊快速切换：同时加载该供应商已保存的 Key */
+  quickSwitchModel: (providerId: string, modelName: string) => Promise<void>;
+  /** 查询各供应商是否已配置 Key（快速切换面板用） */
+  loadProviderKeyStatus: () => Promise<Record<string, boolean>>;
 
   // Versions
   loadVersions: () => Promise<void>;
@@ -210,7 +252,34 @@ interface AppState {
   checkAllResolved: () => void;
 
   // Navigation
-  setActiveView: (view: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset') => void;
+  setActiveView: (view: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset' | 'eval') => void;
+
+  // Evaluation (P0-1)
+  addEvalCase: () => void;
+  updateEvalCase: (id: string, patch: Partial<Pick<EvalCase, 'name' | 'input'>>) => void;
+  setEvalCaseVar: (id: string, key: string, value: string) => void;
+  addEvalCaseVar: (id: string, key: string) => void;
+  removeEvalCaseVar: (id: string, key: string) => void;
+  removeEvalCase: (id: string) => void;
+  duplicateEvalCase: (id: string) => void;
+  selectEvalCase: (id: string | null) => void;
+  addEvalAssertion: (caseId: string, type?: AssertionType) => void;
+  updateEvalAssertion: (caseId: string, assertionId: string, patch: Partial<Assertion>) => void;
+  removeEvalAssertion: (caseId: string, assertionId: string) => void;
+  setEvalPromptRole: (role: 'system' | 'user') => void;
+  importEvalConfig: (text: string) => boolean;
+  loadExampleEvalCases: () => void;
+  exportEvalConfig: () => string;
+  runEval: () => Promise<void>;
+  /** P1-2: 用历史版本内容跑一次评测，并把结果绑到该版本 */
+  runEvalForVersion: (versionId: string) => Promise<void>;
+  clearEvalTargetVersion: () => void;
+  cancelEval: () => void;
+  clearEvalResults: () => void;
+  loadEvalRuns: () => Promise<void>;
+  viewEvalRun: (id: string) => void;
+  /** P1-2b: 把某次运行的用例集快照载回编辑器（会替换当前用例集） */
+  restoreEvalSnapshot: (runId: string) => boolean;
 
   // Workspace
   parseDocumentModules: () => ScopeModule[];
@@ -262,6 +331,52 @@ interface AppState {
 }
 
 let abortController: AbortController | null = null;
+/** 评测运行独立的取消句柄：与对话互不影响 */
+let evalAbortController: AbortController | null = null;
+
+// ── Evaluation persistence (localStorage; cases are small and per-device) ──
+const EVAL_CASES_KEY = 'promptstudio:evalCases';
+const EVAL_ROLE_KEY = 'promptstudio:evalPromptRole';
+
+function persistEvalCases(cases: EvalCase[]): void {
+  try {
+    localStorage.setItem(EVAL_CASES_KEY, JSON.stringify(cases));
+  } catch {
+    // quota / private mode — keep in memory only
+  }
+}
+
+function loadEvalCases(): EvalCase[] {
+  try {
+    const raw = localStorage.getItem(EVAL_CASES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as EvalCase[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadEvalPromptRole(): 'system' | 'user' {
+  try {
+    return localStorage.getItem(EVAL_ROLE_KEY) === 'user' ? 'user' : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+/** 评测对象：优先当前打开的文件，否则主文档 */
+function getEvalTemplate(state: {
+  docContent: string;
+  editingFilePath: string | null;
+  importedFiles: ImportedFileInfo[];
+}): string {
+  if (state.editingFilePath) {
+    const file = state.importedFiles.find(f => f.path === state.editingFilePath);
+    if (file) return file.content;
+  }
+  return state.docContent;
+}
 /** 联动检查/文件校验的防抖定时器 */
 const syncCheckTimer: { current: ReturnType<typeof setTimeout> | null } = { current: null };
 /** 最近一次打开的编辑目标（localStorage 持久化：刷新后恢复） */
@@ -368,8 +483,12 @@ export const useStore = create<AppState>((set, get) => ({
   versions: [],
 
   settingsOpen: false,
+  settingsSection: 'models',
+  themeMode: loadThemeMode(),
+  toolbarStyle: loadToolbarStyle(),
+  activeTour: null,
   selectedProviderId: 'deepseek',
-  selectedModelName: 'deepseek-chat',
+  selectedModelName: 'deepseek-flash',
   apiKeyInput: '',
   baseUrlOverride: '',
   connectionStatus: 'idle',
@@ -403,6 +522,16 @@ export const useStore = create<AppState>((set, get) => ({
   rulesetImportOpen: false,
 
   activeView: 'editor',
+
+  evalCases: [],
+  evalSelectedCaseId: null,
+  evalPromptRole: 'system',
+  evalRunning: false,
+  evalResults: null,
+  evalRuns: [],
+  evalError: null,
+  evalTargetVersionId: null,
+  evalCurrentRunId: null,
 
   // ── Actions ──
 
@@ -445,6 +574,15 @@ export const useStore = create<AppState>((set, get) => ({
 
     // 恢复上次授权的本地文件夹句柄（不弹权限框；need-auth 时由 UI 引导）
     await get().restoreLocalFolder();
+
+    // 评测用例（设备级）+ 历史运行
+    const storedCases = loadEvalCases();
+    set({
+      evalCases: storedCases,
+      evalSelectedCaseId: storedCases[0]?.id ?? null,
+      evalPromptRole: loadEvalPromptRole(),
+    });
+    void get().loadEvalRuns();
 
     // Create default doc if not exists
     const docId = get().docId;
@@ -1145,7 +1283,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   // ── Settings Actions ──
 
-  openSettings: async () => {
+  openSettings: async (section = 'models') => {
     const stored = loadModelConfig();
     if (stored) {
       set({
@@ -1156,19 +1294,95 @@ export const useStore = create<AppState>((set, get) => ({
       const key = await getApiKey(stored.providerId);
       if (key) set({ apiKeyInput: maskApiKey(key) });
     }
-    set({ settingsOpen: true, connectionStatus: 'idle', connectionMessage: '' });
+    set({ settingsOpen: true, settingsSection: section, connectionStatus: 'idle', connectionMessage: '' });
   },
+
+  setSettingsSection: (section) => set({ settingsSection: section }),
+
+  setThemeMode: (mode) => {
+    persistThemeMode(mode);
+    applyTheme(mode);
+    set({ themeMode: mode });
+  },
+
+  setToolbarStyle: (style) => {
+    persistToolbarStyle(style);
+    applyToolbarStyle(style);
+    set({ toolbarStyle: style });
+  },
+
+  startTour: (id) => {
+    // 自动引导只出现一次；重播不受影响
+    try { localStorage.setItem(`promptstudio:tour:${id}`, '1'); } catch { /* ignore */ }
+    set({ activeTour: id });
+  },
+
+  endTour: () => set({ activeTour: null }),
 
   closeSettings: () => set({ settingsOpen: false }),
 
+  // 顶栏模型胶囊：不打开设置弹窗，直接切换并持久化（同时把该供应商已保存的 Key 载入内存）
+  quickSwitchModel: async (providerId, modelName) => {
+    const template = getTemplate(providerId);
+    const name = modelName.trim();
+    if (!template || !name) return;
+
+    const state = get();
+    const sameProvider = providerId === state.selectedProviderId;
+    const keepTypedKey = sameProvider && !!state.apiKeyInput && !state.apiKeyInput.includes('•');
+    const storedKey = template.auth.type === 'none' ? '' : await getApiKey(providerId);
+    const baseUrlOverride = sameProvider ? state.baseUrlOverride : '';
+
+    set({
+      selectedProviderId: providerId,
+      selectedModelName: name,
+      baseUrlOverride,
+      apiKeyInput: keepTypedKey ? state.apiKeyInput : (storedKey ? maskApiKey(storedKey) : ''),
+    });
+
+    saveModelConfig({
+      providerId,
+      modelName: name,
+      baseUrlOverride,
+      configured: !!storedKey || keepTypedKey || template.auth.type === 'none',
+    });
+    toast(`已切换到 ${template.name} · ${name}`, 'success');
+  },
+
+  loadProviderKeyStatus: async () => {
+    const providers = [...PROVIDER_TEMPLATES, CUSTOM_TEMPLATE];
+    const entries = await Promise.all(providers.map(async p => {
+      if (p.auth.type === 'none') return [p.providerId, true] as const;
+      try {
+        const key = await getApiKey(p.providerId);
+        return [p.providerId, !!key] as const;
+      } catch {
+        return [p.providerId, false] as const;
+      }
+    }));
+    return Object.fromEntries(entries) as Record<string, boolean>;
+  },
+
   setProvider: (id: string) => {
     const template = getTemplate(id);
+    const prev = get().selectedProviderId;
+    const keepTypedKey = prev === id ? get().apiKeyInput : '';
     set({
       selectedProviderId: id,
       selectedModelName: template?.defaultModels[0] || '',
       baseUrlOverride: '',
-      apiKeyInput: '',
+      apiKeyInput: keepTypedKey,
     });
+
+    // 切到另一家时把已保存的 Key 载回内存（打码），否则界面会误显示「未配置」
+    if (prev !== id) {
+      void getApiKey(id).then(key => {
+        const state = get();
+        if (state.selectedProviderId === id && state.apiKeyInput === '') {
+          set({ apiKeyInput: key ? maskApiKey(key) : '' });
+        }
+      });
+    }
   },
 
   setModelName: (name: string) => set({ selectedModelName: name }),
@@ -1180,7 +1394,7 @@ export const useStore = create<AppState>((set, get) => ({
     const template = getTemplate(selectedProviderId);
     if (!template) return;
 
-    // Get actual key (might be masked); providers with auth 'none' (e.g. Ollama) skip.
+    // Get actual key (might be masked); providers with auth 'none' (本地端点) skip.
     let apiKey = apiKeyInput;
     if (apiKeyInput.includes('•')) {
       apiKey = await getApiKey(selectedProviderId);
@@ -1207,6 +1421,13 @@ export const useStore = create<AppState>((set, get) => ({
 
   doSaveSettings: async () => {
     const { selectedProviderId, selectedModelName, baseUrlOverride, apiKeyInput } = get();
+    const modelName = selectedModelName.trim();
+
+    // 空模型名保存后会让对话/评测直接 400，先在设置页拦住
+    if (!modelName) {
+      set({ connectionStatus: 'error', connectionMessage: '请先选择或输入模型名称' });
+      return;
+    }
 
     // API Key 三态：
     // - 输入了新 Key（非空且未打码）→ AES-256-GCM 加密保存
@@ -1221,12 +1442,12 @@ export const useStore = create<AppState>((set, get) => ({
     // Save model config
     saveModelConfig({
       providerId: selectedProviderId,
-      modelName: selectedModelName,
+      modelName,
       baseUrlOverride,
       configured: !!apiKeyInput && !apiKeyInput.includes('•'),
     });
 
-    set({ settingsOpen: false });
+    set({ selectedModelName: modelName, settingsOpen: false });
   },
 
   // ── Version Actions ──
@@ -1339,8 +1560,327 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // ── Navigation ──
-  setActiveView: (view: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset') => {
+  setActiveView: (view: 'editor' | 'chat' | 'history' | 'workspace' | 'ruleset' | 'eval') => {
     set({ activeView: view });
+    if (view === 'eval' || view === 'history') {
+      void get().loadEvalRuns();
+      if (view === 'eval' && get().evalCases.length === 0) {
+        set({ evalCases: loadEvalCases(), evalPromptRole: loadEvalPromptRole() });
+      }
+    }
+  },
+
+  // ── Evaluation Actions (P0-1) ──
+  addEvalCase: () => {
+    const state = get();
+    const template = getEvalTemplate(state);
+    const c: EvalCase = {
+      id: makeId('case'),
+      name: `用例 ${state.evalCases.length + 1}`,
+      input: '',
+      vars: scaffoldVars(template),
+      asserts: [{ id: makeId('as'), type: 'contains', value: '' }],
+    };
+    const next = [...state.evalCases, c];
+    persistEvalCases(next);
+    set({ evalCases: next, evalSelectedCaseId: c.id });
+  },
+
+  updateEvalCase: (id, patch) => {
+    const next = get().evalCases.map(c => (c.id === id ? { ...c, ...patch } : c));
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  setEvalCaseVar: (id, key, value) => {
+    const next = get().evalCases.map(c =>
+      c.id === id ? { ...c, vars: { ...c.vars, [key]: value } } : c
+    );
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  addEvalCaseVar: (id, key) => {
+    const trimmed = key.trim();
+    if (!trimmed) return;
+    const next = get().evalCases.map(c =>
+      c.id === id && !(trimmed in c.vars) ? { ...c, vars: { ...c.vars, [trimmed]: '' } } : c
+    );
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  removeEvalCaseVar: (id, key) => {
+    const next = get().evalCases.map(c => {
+      if (c.id !== id) return c;
+      const vars = { ...c.vars };
+      delete vars[key];
+      return { ...c, vars };
+    });
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  removeEvalCase: (id) => {
+    const next = get().evalCases.filter(c => c.id !== id);
+    persistEvalCases(next);
+    set({
+      evalCases: next,
+      evalSelectedCaseId: get().evalSelectedCaseId === id ? (next[0]?.id ?? null) : get().evalSelectedCaseId,
+    });
+  },
+
+  duplicateEvalCase: (id) => {
+    const src = get().evalCases.find(c => c.id === id);
+    if (!src) return;
+    const copy: EvalCase = {
+      ...src,
+      id: makeId('case'),
+      name: `${src.name}（副本）`,
+      vars: { ...src.vars },
+      asserts: src.asserts.map(a => ({ ...a, id: makeId('as') })),
+    };
+    const next = [...get().evalCases, copy];
+    persistEvalCases(next);
+    set({ evalCases: next, evalSelectedCaseId: copy.id });
+  },
+
+  selectEvalCase: (id) => set({ evalSelectedCaseId: id }),
+
+  addEvalAssertion: (caseId, type = 'contains') => {
+    const next = get().evalCases.map(c =>
+      c.id === caseId
+        ? { ...c, asserts: [...c.asserts, { id: makeId('as'), type, value: '', ...(type === 'llm-rubric' ? { threshold: 0.7 } : {}) }] }
+        : c
+    );
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  updateEvalAssertion: (caseId, assertionId, patch) => {
+    const next = get().evalCases.map(c =>
+      c.id === caseId
+        ? { ...c, asserts: c.asserts.map(a => (a.id === assertionId ? { ...a, ...patch } : a)) }
+        : c
+    );
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  removeEvalAssertion: (caseId, assertionId) => {
+    const next = get().evalCases.map(c =>
+      c.id === caseId ? { ...c, asserts: c.asserts.filter(a => a.id !== assertionId) } : c
+    );
+    persistEvalCases(next);
+    set({ evalCases: next });
+  },
+
+  setEvalPromptRole: (role) => {
+    try {
+      localStorage.setItem(EVAL_ROLE_KEY, role);
+    } catch {
+      // ignore
+    }
+    set({ evalPromptRole: role });
+  },
+
+  importEvalConfig: (text) => {
+    const { config, error } = parseEvalConfig(text);
+    if (!config || error) {
+      toast(`配置解析失败：${error ?? '未知错误'}`, 'error');
+      return false;
+    }
+    persistEvalCases(config.cases);
+    set({
+      evalCases: config.cases,
+      evalPromptRole: config.promptRole ?? 'system',
+      evalSelectedCaseId: config.cases[0]?.id ?? null,
+      evalResults: null,
+    });
+    toast(`已导入 ${config.cases.length} 个用例`, 'success');
+    return true;
+  },
+
+  loadExampleEvalCases: () => {
+    get().importEvalConfig(exampleEvalConfig());
+  },
+
+  exportEvalConfig: () => stringifyEvalConfig(get().evalPromptRole, get().evalCases),
+
+  runEval: async () => {
+    const state = get();
+    if (state.evalRunning) return;
+
+    if (state.evalCases.length === 0) {
+      toast('请先添加至少一个评测用例', 'error');
+      return;
+    }
+
+    // P1-2: 指定版本时评测历史内容，否则评测当前文档 / 打开的文件
+    const targetVersion = state.evalTargetVersionId
+      ? state.versions.find(v => v.id === state.evalTargetVersionId)
+      : undefined;
+    if (state.evalTargetVersionId && !targetVersion) {
+      set({ evalTargetVersionId: null });
+      toast('目标版本已不存在，已切回当前文档', 'error');
+    }
+
+    const templateText = targetVersion ? targetVersion.content : getEvalTemplate(state);
+    if (!templateText.trim()) {
+      toast(targetVersion ? `${targetVersion.label} 内容为空，无法评测` : '当前文档为空，没有可评测的提示词', 'error');
+      return;
+    }
+
+    const template = getTemplate(state.selectedProviderId);
+    if (!template) {
+      toast('未找到模型供应商模板', 'error');
+      return;
+    }
+
+    const needsKey = template.auth.type !== 'none';
+    const apiKey = needsKey ? await getApiKey(state.selectedProviderId) : '';
+    if (needsKey && !apiKey) {
+      set({ settingsOpen: true, connectionMessage: '请先配置 API Key' });
+      return;
+    }
+
+    const baseUrl = state.baseUrlOverride || template.baseUrl;
+    const startedAt = Date.now();
+    const docName = state.editingFilePath
+      ? (state.importedFiles.find(f => f.path === state.editingFilePath)?.name ?? state.docName)
+      : state.docName;
+
+    // P1-2b: 快照在开跑时冻结，运行中编辑用例不会污染这次结果
+    const casesSnapshot = cloneCases(state.evalCases);
+
+    evalAbortController = new AbortController();
+    set({ evalRunning: true, evalResults: [], evalError: null });
+
+    try {
+      const results = await runEvalCases({
+        template: templateText,
+        promptRole: state.evalPromptRole,
+        cases: casesSnapshot,
+        target: {
+          providerId: state.selectedProviderId,
+          template: { ...template, baseUrl },
+          apiKey,
+          model: state.selectedModelName,
+        },
+        signal: evalAbortController.signal,
+        concurrency: 3,
+        onCaseDone: (result) => {
+          set({ evalResults: [...(get().evalResults ?? []), result] });
+        },
+      });
+
+      const passed = results.filter(r => r.passed).length;
+      set({ evalResults: results });
+
+      // 版本绑定：显式指定 > 主文档内容与最新版本一致 > 未版本化
+      // （文件模式下不绑定主文档版本：文件内容即使碰巧相同也不是那个版本）
+      const latest = state.versions[0];
+      const boundVersion = targetVersion
+        ?? (!state.editingFilePath && latest && latest.content.trim() === templateText.trim() ? latest : undefined);
+
+      const run: EvalRun = {
+        id: makeId('run'),
+        docId: state.docId,
+        docName,
+        providerId: state.selectedProviderId,
+        modelName: state.selectedModelName,
+        promptRole: state.evalPromptRole,
+        promptSnapshot: templateText,
+        createdAt: startedAt,
+        durationMs: Date.now() - startedAt,
+        total: results.length,
+        passed,
+        cases: results,
+        versionId: boundVersion?.id ?? null,
+        versionLabel: boundVersion?.label ?? '未版本化',
+        versionNumber: boundVersion?.versionNumber,
+        score: scoreRun({ passed, total: results.length }),
+        dataset: casesSnapshot,
+        datasetHash: datasetHash(casesSnapshot),
+      };
+      await saveEvalRun(run);
+      set({ evalCurrentRunId: run.id });
+      await get().loadEvalRuns();
+      toast(
+        `评测完成：${passed}/${results.length} 通过` + (boundVersion ? ` · ${boundVersion.label}` : ''),
+        passed === results.length ? 'success' : 'info'
+      );
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        toast('评测已取消', 'info');
+      } else {
+        const msg = e instanceof Error ? e.message : String(e);
+        set({ evalError: msg });
+        toast(`评测失败：${msg}`, 'error');
+      }
+    } finally {
+      evalAbortController = null;
+      // 目标版本只对本次运行生效：避免用户下次改动后误以为在评测当前内容
+      set({ evalRunning: false, evalTargetVersionId: null });
+    }
+  },
+
+  runEvalForVersion: async (versionId) => {
+    const version = get().versions.find(v => v.id === versionId);
+    if (!version) {
+      toast('版本不存在，请刷新后重试', 'error');
+      return;
+    }
+    if (get().evalRunning) return;
+    set({ evalTargetVersionId: versionId, evalError: null, activeView: 'eval' });
+    await get().runEval();
+  },
+
+  clearEvalTargetVersion: () => set({ evalTargetVersionId: null }),
+
+  cancelEval: () => {
+    evalAbortController?.abort();
+  },
+
+  clearEvalResults: () => set({ evalResults: null, evalError: null, evalCurrentRunId: null }),
+
+  loadEvalRuns: async () => {
+    try {
+      const runs = await getEvalRuns(get().docId, 100);
+      set({ evalRuns: runs });
+    } catch {
+      // DB unavailable (private mode) — keep the in-memory run list empty
+    }
+  },
+
+  viewEvalRun: (id) => {
+    const run = get().evalRuns.find(r => r.id === id);
+    if (run) set({ evalResults: run.cases, evalError: null, evalCurrentRunId: run.id });
+  },
+
+  restoreEvalSnapshot: (runId) => {
+    const run = get().evalRuns.find(r => r.id === runId);
+    const snapshot = run?.dataset;
+    if (!run || !snapshot || snapshot.length === 0) {
+      toast('这次运行没有用例快照（旧版本运行记录）', 'error');
+      return false;
+    }
+
+    const current = get().evalCases;
+    const runHash = run.datasetHash ?? datasetHash(snapshot);
+    if (current.length > 0 && datasetHash(current) !== runHash) {
+      const ok = confirm(
+        `当前用例集与「${run.versionLabel ?? '该运行'}」的快照不同。\n\n` +
+        `载入将替换当前 ${current.length} 条用例，确定？`
+      );
+      if (!ok) return false;
+    }
+
+    const cases = cloneCases(snapshot);
+    persistEvalCases(cases);
+    set({ evalCases: cases, evalSelectedCaseId: cases[0]?.id ?? null });
+    toast(`已载入 ${cases.length} 条用例（${run.versionLabel ?? '未版本化'} 运行）`, 'success');
+    return true;
   },
 
   // ── Workspace Actions ──

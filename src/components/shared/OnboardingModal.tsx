@@ -46,7 +46,7 @@ export default function OnboardingModal() {
       className="settings-overlay"
       onClick={e => { if (e.target === e.currentTarget) finish(); }}
     >
-      <div className="settings-dialog animate-scaleIn" style={{ width: 560 }}>
+      <div className="settings-dialog onboarding-dialog animate-scaleIn">
         <div className="settings-header">
           <span className="sd-title">👋 欢迎使用 PromptStudio</span>
           <button className="btn btn-icon btn-ghost btn-sm" onClick={finish} title="跳过">

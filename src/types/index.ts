@@ -256,3 +256,6 @@ export interface PendingReference {
   status: 'pending' | 'confirmed' | 'dismissed';
   tokenEst: number;
 }
+
+// ── Evaluation (P0-1) ──
+export * from './eval';

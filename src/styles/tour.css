@@ -1,0 +1,218 @@
+/* ═══════════════ 模块级功能引导（P1-13） ═══════════════ */
+.tour-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+}
+
+.tour-hole {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(9, 12, 18, 0.58);
+  outline: 2px solid rgba(129, 140, 248, 0.85);
+  pointer-events: none;
+  transition: left 0.2s var(--ease-out), top 0.2s var(--ease-out),
+    width 0.2s var(--ease-out), height 0.2s var(--ease-out);
+}
+
+.tour-dim {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 12, 18, 0.58);
+}
+
+.tour-popover {
+  position: fixed;
+  width: 330px;
+  padding: 15px 16px 13px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  z-index: 801;
+  overflow: hidden;
+  animation: tourIn 0.24s var(--ease-out);
+}
+
+.tour-popover.center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: tourInCenter 0.24s var(--ease-out);
+}
+
+@keyframes tourIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tourInCenter {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.tour-progressbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--bg-dark);
+}
+
+.tour-progressbar span {
+  display: block;
+  height: 100%;
+  background: var(--brand-gradient);
+  transition: width 0.22s var(--ease-out);
+}
+
+.tour-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.tour-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--brand-dark);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+[data-theme='dark'] .tour-badge {
+  background: rgba(99, 102, 241, 0.18);
+  color: var(--brand-light);
+}
+
+.tour-count {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tour-head .btn { margin-left: 2px; }
+
+.tour-title {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.tour-body {
+  margin: 5px 0 12px;
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+
+/* 语音两种模式对比（AI 对话引导第 5 步） */
+.tour-voice-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: -2px 0 12px;
+}
+
+.tvm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-input);
+}
+
+.tvm-icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tvm-row.safe .tvm-icon {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.tvm-row.direct .tvm-icon {
+  background: rgba(234, 179, 8, 0.14);
+  color: #d97706;
+}
+
+.tvm-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tvm-copy b {
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.tvm-copy small {
+  font-size: 9.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.tvm-tag {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--brand-dark);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.tvm-row.direct .tvm-tag {
+  color: #b45309;
+  background: rgba(234, 179, 8, 0.14);
+}
+
+[data-theme='dark'] .tvm-tag {
+  color: var(--brand-light);
+  background: rgba(99, 102, 241, 0.18);
+}
+
+[data-theme='dark'] .tvm-row.direct .tvm-tag {
+  color: #fbbf24;
+  background: rgba(234, 179, 8, 0.16);
+}
+
+.tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-skip {
+  margin-right: auto;
+  color: var(--text-muted);
+}
+
+.tour-replay { color: var(--text-muted); }
+.tour-replay:hover { color: var(--brand); }
+
+.view-head .tour-replay { margin-left: auto; }
+.pane-head .tour-replay { margin-left: 2px; }

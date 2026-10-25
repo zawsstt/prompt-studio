@@ -6,6 +6,8 @@ import SettingsModal from './components/Settings/SettingsModal';
 import ConfirmDialog from './components/shared/ConfirmDialog';
 import OnboardingModal from './components/shared/OnboardingModal';
 import RulesetImportModal from './components/Ruleset/RulesetImportModal';
+import ModuleTour from './components/shared/ModuleTour';
+import { applyTheme, applyToolbarStyle } from './lib/theme';
 import { GripVertical } from 'lucide-react';
 import { ToastContainer, toast } from './components/shared/Toast';
 
@@ -100,6 +102,8 @@ export default function App() {
   const confirmAutoOrganize = useStore(s => s.confirmAutoOrganize);
   const cancelAutoOrganize = useStore(s => s.cancelAutoOrganize);
   const showOnboarding = useStore(s => s.showOnboarding);
+  const themeMode = useStore(s => s.themeMode);
+  const toolbarStyle = useStore(s => s.toolbarStyle);
 
   const [ready, setReady] = useState(false);
 
@@ -120,6 +124,17 @@ export default function App() {
       setReady(true);
     });
   }, [init]);
+
+  // 主题：明暗模式 + 划词工具条材质（跟随系统时监听系统切换）
+  useEffect(() => {
+    applyTheme(themeMode);
+    applyToolbarStyle(toolbarStyle);
+    if (themeMode !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => applyTheme('system');
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [themeMode, toolbarStyle]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -189,6 +204,7 @@ export default function App() {
       </div>
       <AppShell />
       <ModLogTab />
+      <ModuleTour />
       {showOnboarding && <OnboardingModal />}
       {settingsOpen && <SettingsModal />}
       <RulesetImportModal />

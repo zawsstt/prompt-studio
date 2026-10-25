@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mic, Send, X, Check, Keyboard, Zap, Shield } from 'lucide-react';
+import { Mic, Send, X, Check, Keyboard, Zap, Shield, HelpCircle } from 'lucide-react';
 import { ThinkingOrb } from 'thinking-orbs';
 import { BorderBeam } from 'border-beam';
 import { toast } from '../shared/Toast';
 import { useFullscreen } from '../../hooks/useFullscreen';
+import { useEffectiveDark } from '../../hooks/useTheme';
 import { useVoiceHotkey, type VoiceInputMode } from '../../hooks/useVoiceHotkey';
 
 interface VoiceInputProps {
@@ -29,6 +30,8 @@ export default function VoiceInput({
   const [interimText, setInterimText] = useState('');
   const [finalAccumulated, setFinalAccumulated] = useState('');
   const [showHotkeyHint, setShowHotkeyHint] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const dark = useEffectiveDark();
   const recognitionRef = useRef<any>(null);
   const isManuallyStopped = useRef(false);
   const liveTranscriptRef = useRef('');
@@ -160,6 +163,7 @@ export default function VoiceInput({
       recognitionRef.current = null;
     }
     setIsListening(false);
+    setGuideOpen(false);
     document.body.classList.remove('voice-active');
   };
 
@@ -217,6 +221,15 @@ export default function VoiceInput({
     setFinalAccumulated('');
   };
 
+  const chooseMode = (mode: VoiceInputMode) => {
+    updateHotkeyConfig({ inputMode: mode });
+    setGuideOpen(false);
+    toast(
+      mode === 'direct' ? '已切换为直出模式：识别完自动发送' : '已切换为安全模式：识别完先填入输入框',
+      'info'
+    );
+  };
+
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
@@ -260,7 +273,62 @@ export default function VoiceInput({
       {/* 优化后的语音浮窗：固定贴合在对话输入区上方，并加上 BorderBeam 高光环绕与 ThinkingOrb 波动 */}
       {isListening && (
         <div className="voice-floating-bar">
-          <BorderBeam size="md" colorVariant="ocean" strength={0.85} theme="dark">
+          {guideOpen && (
+            <div className="voice-mode-guide" role="dialog" aria-label="语音输入模式说明">
+              <div className="vmg-head">
+                <span className="vmg-title">两种模式怎么选？</span>
+                <button type="button" className="vmg-close" onClick={() => setGuideOpen(false)} title="关闭说明">
+                  <X size={12} />
+                </button>
+              </div>
+              <p className="vmg-sub">识别过程完全一样，区别只在识别结束后的动作。</p>
+
+              <button
+                type="button"
+                className={`vmg-option safe ${hotkeyConfig.inputMode === 'safe' ? 'on' : ''}`}
+                onClick={() => chooseMode('safe')}
+              >
+                <span className="vmg-option-head">
+                  <span className="vmg-icon safe"><Shield size={14} /></span>
+                  <span className="vmg-option-title">
+                    <b>安全模式</b>
+                    <small>识别完先填入输入框，确认后再发送</small>
+                  </span>
+                  <span className="vmg-radio">{hotkeyConfig.inputMode === 'safe' && <Check size={11} />}</span>
+                </span>
+                <span className="vmg-demo safe">
+                  <span className="vmg-demo-field">帮我把结论放到最前面<i /></span>
+                  <span className="vmg-demo-note"><Check size={10} /> 等你看过再发</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={`vmg-option direct ${hotkeyConfig.inputMode === 'direct' ? 'on' : ''}`}
+                onClick={() => chooseMode('direct')}
+              >
+                <span className="vmg-option-head">
+                  <span className="vmg-icon direct"><Zap size={14} /></span>
+                  <span className="vmg-option-title">
+                    <b>直出模式</b>
+                    <small>识别完直接发送，适合短指令、连续补录</small>
+                  </span>
+                  <span className="vmg-radio">{hotkeyConfig.inputMode === 'direct' && <Check size={11} />}</span>
+                </span>
+                <span className="vmg-demo direct">
+                  <span className="vmg-demo-field">帮我优化这段提示词</span>
+                  <span className="vmg-demo-send"><Send size={10} /> 发送</span>
+                </span>
+              </button>
+
+              <div className="vmg-foot">
+                <span>随时可在卡片下方切换</span>
+                <button type="button" className="vmg-start" onClick={() => setGuideOpen(false)}>知道了</button>
+              </div>
+            </div>
+          )}
+
+          <BorderBeam size="md" colorVariant="ocean" strength={0.85} theme={dark ? 'dark' : 'light'}>
             <div className="voice-dock-pill">
               <div className="voice-pill-header">
                 <div className="voice-orb-indicator">
@@ -295,16 +363,26 @@ export default function VoiceInput({
                     ? '🚀 直出模式：识别完成后自动发送'
                     : '🛡️ 安全模式：识别完成后填入输入框'}
                 </span>
-                <button
-                  type="button"
-                  className="voice-mode-toggle-btn"
-                  onClick={() => updateHotkeyConfig({
-                    inputMode: hotkeyConfig.inputMode === 'direct' ? 'safe' : 'direct'
-                  })}
-                  title="切换输入模式"
-                >
-                  切换模式
-                </button>
+                <span className="voice-mode-actions">
+                  <button
+                    type="button"
+                    className="voice-mode-help"
+                    onClick={() => setGuideOpen(true)}
+                    title="查看两种模式的说明与演示"
+                  >
+                    <HelpCircle size={11} /> 演示
+                  </button>
+                  <button
+                    type="button"
+                    className="voice-mode-toggle-btn"
+                    onClick={() => updateHotkeyConfig({
+                      inputMode: hotkeyConfig.inputMode === 'direct' ? 'safe' : 'direct'
+                    })}
+                    title="切换输入模式"
+                  >
+                    切换模式
+                  </button>
+                </span>
               </div>
 
               {/* 实时转写结果展示 */}

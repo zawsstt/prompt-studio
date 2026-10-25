@@ -20,6 +20,7 @@ import { useStore } from '../../store/useStore';
 import type { ValidationIssue, WorkspaceScope, SelectionQuickActionType } from '../../types';
 import { parseModulesFromContent } from '../../lib/scopeParse';
 import SelectionToolbar from '../shared/SelectionToolbar';
+import { useEffectiveDark } from '../../hooks/useTheme';
 
 // ── Light theme syntax highlighting (matches promptstudio-app.html token colors) ──
 const lightHighlightStyle = HighlightStyle.define([
@@ -37,6 +38,24 @@ const lightHighlightStyle = HighlightStyle.define([
   { tag: t.link, color: '#0070C1', textDecoration: 'underline' },
   { tag: t.meta, color: '#808080' },
   { tag: t.invalid, color: '#FF0000', textDecoration: 'underline' },
+]);
+
+// ── Dark theme syntax highlighting（品牌靛蓝之外的代码 token，对齐 VS Code Dark+） ──
+const darkHighlightStyle = HighlightStyle.define([
+  { tag: t.keyword, color: '#C586C0' },
+  { tag: t.string, color: '#CE9178' },
+  { tag: t.comment, color: '#6A9955', fontStyle: 'italic' },
+  { tag: t.heading, color: '#9CDCFE', fontWeight: '600' },
+  { tag: t.propertyName, color: '#9CDCFE' },
+  { tag: t.function(t.variableName), color: '#DCDCAA' },
+  { tag: t.operator, color: '#D4D4D4' },
+  { tag: t.number, color: '#B5CEA8' },
+  { tag: t.bool, color: '#569CD6' },
+  { tag: t.emphasis, fontStyle: 'italic' },
+  { tag: t.strong, fontWeight: '600' },
+  { tag: t.link, color: '#4FC1FF', textDecoration: 'underline' },
+  { tag: t.meta, color: '#8A8F98' },
+  { tag: t.invalid, color: '#FF6B6B', textDecoration: 'underline' },
 ]);
 
 // ── Inline validation lint (P0-2) ──
@@ -171,6 +190,9 @@ export default function CodeEditor() {
   const languageConfRef = useRef<Compartment | null>(null);
   const lintConfRef = useRef<Compartment | null>(null);
   const readOnlyConfRef = useRef<Compartment | null>(null);
+  const themeConfRef = useRef<Compartment | null>(null);
+
+  const isDark = useEffectiveDark();
 
   const docContent = useStore(s => s.docContent);
   const setDocContent = useStore(s => s.setDocContent);
@@ -301,7 +323,9 @@ export default function CodeEditor() {
         bracketMatching(),
         autocompletion(),
         highlightActiveLine(),
-        syntaxHighlighting(lightHighlightStyle),
+        (themeConfRef.current = new Compartment()).of(
+          syntaxHighlighting(isDark ? darkHighlightStyle : lightHighlightStyle)
+        ),
         languageConf.of(markdown()),
         lintGutter(),
         lintConf.of([]),
@@ -392,6 +416,16 @@ export default function CodeEditor() {
       });
     }
   }, [activeContent]);
+
+  // 主题切换：重配语法高亮（背景/文字走 CSS 变量，无需重建编辑器）
+  useEffect(() => {
+    const view = viewRef.current;
+    const conf = themeConfRef.current;
+    if (!view || !conf) return;
+    view.dispatch({
+      effects: conf.reconfigure(syntaxHighlighting(isDark ? darkHighlightStyle : lightHighlightStyle)),
+    });
+  }, [isDark]);
 
   // P0-2: reconfigure the inline linter when validation issues change
   // （文件模式下使用文件内容的校验结果）
