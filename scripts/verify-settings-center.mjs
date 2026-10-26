@@ -172,6 +172,29 @@ try {
     dataRows: document.querySelectorAll('.settings-data-list li').length,
   }));
   check('数据与隐私分区', privacy.head === '数据与隐私' && privacy.reset && privacy.dataRows === 3, JSON.stringify(privacy));
+
+  const maskCopy = await page.evaluate(() => ({
+    placeholder: document.querySelector('.settings-body textarea')?.getAttribute('placeholder') || '',
+    hints: [...document.querySelectorAll('.settings-form-group .hint')].map(n => n.textContent || '').join(' '),
+  }));
+  check('脱敏词条支持「词条 | 含义标记」',
+    maskCopy.placeholder.includes('含义标记') &&
+    maskCopy.hints.includes('AI 只会看到编号和类型') &&
+    maskCopy.hints.includes('原文不会发送'),
+    JSON.stringify(maskCopy));
+
+  await page.click('.settings-body textarea');
+  await page.type('.settings-body textarea', 'ods_user_info_daily\n详细指标A | 业务指标\n张某某 | 客户姓名', { delay: 5 });
+  await page.evaluate(() => document.querySelector('.settings-body textarea')?.blur());
+  await sleep(300);
+  const termPreview = await page.evaluate(() =>
+    [...document.querySelectorAll('.mask-term-chip')].map(n => (n.textContent || '').replace(/\s+/g, ' ').trim()));
+  check('词条预览显示含义标记',
+    termPreview.length === 3 &&
+    termPreview[0].includes('SQL 底表名') &&
+    termPreview[1].includes('业务指标') &&
+    termPreview[2].includes('客户姓名'),
+    JSON.stringify(termPreview));
   await page.screenshot({ path: `${OUT}\\settings-center-privacy.png` });
 
   await clickSection('关于');

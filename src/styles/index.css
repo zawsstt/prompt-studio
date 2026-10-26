@@ -2797,6 +2797,51 @@ body.sb-open::after {
   color: var(--success);
 }
 
+/* 自定义敏感词：词条 → 含义标记预览 */
+.mask-term-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mask-term-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-input);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.mask-term-chip > span {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mask-term-chip i {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.mask-term-chip b {
+  font-weight: 650;
+  color: var(--brand);
+}
+
+.mask-term-more {
+  align-self: center;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 .settings-divider {
   height: 1px;
   background: var(--border);

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { THEME_MODES, TOOLBAR_STYLES } from '../../lib/theme';
+import { parseSensitiveTermLines, inferSensitiveLabel } from '../../lib/sanitize';
 import { TOUR_IDS, TOUR_LABELS } from '../../lib/tours';
 
 const SECTIONS: { id: SettingsSection; label: string; desc: string; icon: typeof Plug }[] = [
@@ -82,6 +83,8 @@ export default function SettingsModal() {
     const terms = termsDraft.split('\n').map(t => t.trim()).filter(Boolean);
     setSensitiveTerms(terms);
   };
+  const termPreview = parseSensitiveTermLines(termsDraft.split('\n')).slice(0, 4);
+  const maskLabelCount = maskRegistry?.labelById ? new Set([...maskRegistry.labelById.values()]).size : 0;
 
   return (
     <div className="settings-overlay active" onClick={(e) => {
@@ -376,7 +379,9 @@ export default function SettingsModal() {
                     </button>
                     <span className="key-status" style={maskEnabled ? { color: 'var(--success)' } : {}}>
                       {maskEnabled
-                        ? (maskRegistry ? `本会话已建立 ${maskRegistry.byId.size} 条编号映射` : '发送消息时自动建立编号映射')
+                        ? (maskRegistry
+                          ? `本会话已建立 ${maskRegistry.byId.size} 条编号映射 · ${maskLabelCount} 类含义标记`
+                          : '发送消息时自动建立编号映射')
                         : '开启后：SQL 底表名 / 手机号 / 身份证 / 邮箱 / 内网 IP 与自定义词条将被编号替换'}
                     </span>
                   </div>
@@ -386,10 +391,27 @@ export default function SettingsModal() {
                     value={termsDraft}
                     onChange={e => setTermsDraft(e.target.value)}
                     onBlur={applyTerms}
-                    placeholder={'自定义敏感词条（每行一条，全局同编号替换）\n例如：\n详细指标A\nods_user_info_daily\n张某某'}
+                    placeholder={'自定义敏感词条（每行一条，可选「| 含义标记」）\n例如：\n详细指标A | 业务指标\nods_user_info_daily | 数据表名\n张某某 | 客户姓名'}
                   />
+                  {termPreview.length > 0 && (
+                    <div className="mask-term-preview">
+                      {termPreview.map(t => (
+                        <span className="mask-term-chip" key={t.value}>
+                          <span>{t.value}</span>
+                          <i>→</i>
+                          <b>{t.label || inferSensitiveLabel(t.value) || '自定义敏感词'}</b>
+                        </span>
+                      ))}
+                      {parseSensitiveTermLines(termsDraft.split('\n')).length > 4 && (
+                        <span className="mask-term-more">+ 更多</span>
+                      )}
+                    </div>
+                  )}
                   <div className="hint">
-                    词条在多个文档中引用时同步改写为同一编号（如 SENS-001）；AI 优化完成后，在确认编辑窗口按编号还原为真实内容。
+                    词条在多个文档中引用时同步改写为同一编号（如 SENS-001）；「|」后是给模型看的类型标记，AI 只会看到编号和类型，原文不会发送。确认编辑时按编号还原。
+                  </div>
+                  <div className="hint">
+                    不写含义标记时：内置类型自动识别，其他词条显示为「自定义敏感词」。
                   </div>
                 </div>
 

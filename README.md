@@ -11,6 +11,7 @@
 - **编辑与规则校验**：CodeMirror 6 编辑器，Markdown / YAML 高亮、自动补全、实时结构 / 顺序 / 格式校验，支持一键自动整理。
 - **多模型 AI 对话**：OpenAI、DeepSeek、Anthropic、Gemini、通义千问、Moonshot、智谱 GLM、OpenRouter 八家供应商；流式输出、Reasoning 折叠、上下文自动注入、候选修改应用。
 - **语音输入双模式**：安全模式识别完先填入输入框、确认后发送；直出模式识别完直接发送。两种模式在 AI 对话模块引导中直接对比演示。
+- **发送前脱敏与语义编码本**：内置 SQL 底表名 / 手机号 / 身份证 / 邮箱 / 内网 IP 规则与自定义词条；自定义词条可写「词条 | 含义标记」，AI 只收到编号 + 类型（如 SENS-001 → SQL 底表名），原文不出本机，确认修改后按编号还原。
 - **Diff 对比与修改日志**：左右分屏同步滚动、四色变更标记、逐块接受 / 拒绝，Why / How / Effect 说明可编辑、可钉住。
 - **版本时间线**：每次接受修改自动生成版本快照，支持回滚、重命名、导出变更日志与 `SKILL.md`。
 - **提示词评测**：用例 + 7 类断言（contains / not-contains / regex / equals / json-valid / max-latency / llm-rubric）、结果矩阵、历史运行、回归基线、用例集快照与退化用例 changeBlock 定位。

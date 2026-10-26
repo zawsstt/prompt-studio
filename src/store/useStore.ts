@@ -17,6 +17,7 @@ import { detectPathMentions, matchImportedFiles } from '../lib/referenceSearch';
 import { sendMessage, testConnection, type ChatMessagePayload } from '../lib/api/adapter';
 import {
   BUILTIN_RULES, collectSensitiveTokens, buildMaskRegistry,
+  buildMaskLegend, parseSensitiveTermLines,
   maskText, unmaskText, type MaskRegistry,
 } from '../lib/sanitize';
 import {
@@ -796,6 +797,14 @@ export const useStore = create<AppState>((set, get) => ({
     // Build context（内容源已按映射表统一脱敏）
     const contextMessages = buildContextMessages(state, userText, maskReg);
 
+    // 类型编码本：只告诉模型每个编号代表哪类实体，绝不包含原文
+    const maskLegend = maskReg
+      ? buildMaskLegend(maskReg, contextMessages.map(msg => msg.content))
+      : null;
+    const systemPrompt = maskLegend
+      ? `${DEFAULT_SYSTEM_PROMPT}\n\n${maskLegend}`
+      : DEFAULT_SYSTEM_PROMPT;
+
     // P1-11: report confirmed references actually injected into context
     const confirmedRefs = state.pendingReferences.filter(r => r.status === 'confirmed');
     if (confirmedRefs.length > 0) {
@@ -838,7 +847,7 @@ export const useStore = create<AppState>((set, get) => ({
         model: state.selectedModelName,
         messages: contextMessages,
         signal: abortController.signal,
-        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+        systemPrompt,
         callbacks: {
           onToken: (token: string) => {
             fullText += token;
@@ -1116,8 +1125,17 @@ export const useStore = create<AppState>((set, get) => ({
       ...state.importedFiles.map(f => f.content),
       ...state.workspaceScopes.flatMap(s => s.modules.filter(m => m.selected).map(m => m.heading)),
     ];
-    const tokens = collectSensitiveTokens(sources, state.sensitiveTerms, BUILTIN_RULES);
-    const reg = tokens.size > 0 ? buildMaskRegistry(tokens) : null;
+    // 自定义词条支持「词条 | 含义标记」；标记只给模型看类型，原文仍只留在本地
+    const termEntries = parseSensitiveTermLines(state.sensitiveTerms);
+    const termLabels = new Map(termEntries.map(e => [e.value, e.label]));
+    const tokens = collectSensitiveTokens(
+      sources,
+      termEntries.map(e => e.value),
+      BUILTIN_RULES,
+    );
+    const reg = tokens.size > 0
+      ? buildMaskRegistry(tokens, token => termLabels.get(token) || '')
+      : null;
     set({ maskRegistry: reg });
     return reg;
   },
@@ -2550,9 +2568,9 @@ function buildContextMessages(
   const history = state.chatMessages.slice(-5);
   for (const msg of history) {
     if (msg.role === 'user') {
-      messages.push({ role: 'user', content: msg.content });
+      messages.push({ role: 'user', content: m(msg.content) });
     } else if (msg.role === 'assistant' && msg.content && !msg.content.startsWith('❌')) {
-      messages.push({ role: 'assistant', content: msg.content.slice(0, 500) });
+      messages.push({ role: 'assistant', content: m(msg.content.slice(0, 500)) });
     }
   }
 
